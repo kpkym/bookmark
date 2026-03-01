@@ -24,6 +24,7 @@ export function BookmarkCard({ bookmark, onDelete }: Props) {
     <div className="group relative rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-md transition-shadow">
       <a href={bookmark.url} target="_blank" rel="noopener noreferrer">
         {bookmark.screenshotPath ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={`/api/screenshots/${bookmark.screenshotPath}`}
             alt={bookmark.title}

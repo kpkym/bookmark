@@ -10,7 +10,7 @@ export async function PATCH(
   const body = await request.json();
   const { name, parentId } = body;
 
-  const updates: Record<string, any> = {};
+  const updates: Record<string, string | number | null> = {};
   if (name !== undefined) updates.name = name.trim();
   if (parentId !== undefined) updates.parentId = parentId;
 

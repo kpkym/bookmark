@@ -3,6 +3,7 @@ import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 export const folders = sqliteTable("folders", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   parentId: integer("parent_id").references((): any => folders.id, {
     onDelete: "set null",
   }),

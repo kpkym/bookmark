@@ -11,7 +11,7 @@ export async function PATCH(
   const body = await request.json();
   const { title, description, folderId } = body;
 
-  const updates: Record<string, any> = {
+  const updates: Record<string, string | number | Date | null> = {
     updatedAt: new Date(),
   };
   if (title !== undefined) updates.title = title.trim();
