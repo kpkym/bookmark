@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Save Bookmark</h1>
+    <div class="field">
+      <label>Title</label>
+      <input type="text" id="title">
+    </div>
+    <div class="field">
+      <label>URL</label>
+      <input type="text" id="url" readonly>
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <textarea id="description" rows="2"></textarea>
+    </div>
+    <div class="field">
+      <label>Folder</label>
+      <select id="folder">
+        <option value="">No folder</option>
+      </select>
+    </div>
+    <div id="preview">
+      <img id="screenshot-preview" alt="Screenshot preview">
+    </div>
+    <div class="field">
+      <label>Server URL</label>
+      <input type="text" id="serverUrl" placeholder="http://localhost:3000">
+    </div>
+    <button id="save" class="btn-primary">Save Bookmark</button>
+    <div id="status"></div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
