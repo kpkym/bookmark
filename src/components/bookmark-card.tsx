@@ -1,16 +1,7 @@
 "use client";
 
-import { useState } from "react";
-
-type Bookmark = {
-  id: number;
-  url: string;
-  title: string;
-  description: string | null;
-  screenshotPath: string | null;
-  folderId: number | null;
-  createdAt: string;
-};
+import { useState, useEffect, useRef } from "react";
+import { Bookmark } from "@/types/bookmark";
 
 type Props = {
   bookmark: Bookmark;
@@ -19,6 +10,18 @@ type Props = {
 
 export function BookmarkCard({ bookmark, onDelete }: Props) {
   const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showMenu) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showMenu]);
 
   return (
     <div className="group relative rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-md transition-shadow">
@@ -46,25 +49,27 @@ export function BookmarkCard({ bookmark, onDelete }: Props) {
           </p>
         )}
       </div>
-      <button
-        onClick={() => setShowMenu(!showMenu)}
-        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-black/50 text-white rounded px-2 py-0.5 text-xs transition-opacity"
-      >
-        ...
-      </button>
-      {showMenu && (
-        <div className="absolute top-8 right-2 bg-white dark:bg-gray-900 border rounded shadow-lg z-10">
-          <button
-            onClick={() => {
-              onDelete(bookmark.id);
-              setShowMenu(false);
-            }}
-            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-800"
-          >
-            Delete
-          </button>
-        </div>
-      )}
+      <div ref={menuRef}>
+        <button
+          onClick={() => setShowMenu(!showMenu)}
+          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-black/50 text-white rounded px-2 py-0.5 text-xs transition-opacity"
+        >
+          ...
+        </button>
+        {showMenu && (
+          <div className="absolute top-8 right-2 bg-white dark:bg-gray-900 border rounded shadow-lg z-10">
+            <button
+              onClick={() => {
+                onDelete(bookmark.id);
+                setShowMenu(false);
+              }}
+              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              Delete
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

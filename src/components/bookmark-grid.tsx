@@ -2,16 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { BookmarkCard } from "./bookmark-card";
-
-type Bookmark = {
-  id: number;
-  url: string;
-  title: string;
-  description: string | null;
-  screenshotPath: string | null;
-  folderId: number | null;
-  createdAt: string;
-};
+import { Bookmark } from "@/types/bookmark";
 
 type Props = {
   searchQuery: string;
