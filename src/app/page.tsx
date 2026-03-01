@@ -10,6 +10,8 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const fetchBookmarks = useCallback(() => {
     const params = new URLSearchParams();
@@ -25,6 +27,22 @@ export default function Home() {
     fetchBookmarks();
   }, [fetchBookmarks]);
 
+  function toggleBatchMode() {
+    if (batchMode) {
+      setSelectedIds(new Set());
+    }
+    setBatchMode(!batchMode);
+  }
+
+  function toggleSelection(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   function handleDelete(id: number) {
     fetch(`/api/bookmarks/${id}`, { method: "DELETE" });
     setBookmarks((prev) => prev.filter((b) => b.id !== id));
@@ -37,13 +55,28 @@ export default function Home() {
         onSelectFolder={setSelectedFolderId}
       />
       <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="border-b border-gray-200 dark:border-gray-800 p-4">
-          <SearchBar value={searchQuery} onChange={setSearchQuery} />
+        <header className="border-b border-gray-200 dark:border-gray-800 p-4 flex items-center gap-4">
+          <div className="flex-1">
+            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+          </div>
+          <button
+            onClick={toggleBatchMode}
+            className={`px-3 py-1.5 text-sm rounded border transition-colors ${
+              batchMode
+                ? "bg-blue-600 text-white border-blue-600"
+                : "border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+            }`}
+          >
+            {batchMode ? "Cancel" : "Select"}
+          </button>
         </header>
         <div className="flex-1 overflow-y-auto">
           <BookmarkGrid
             bookmarks={bookmarks}
             onDelete={handleDelete}
+            batchMode={batchMode}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelection}
           />
         </div>
       </main>
