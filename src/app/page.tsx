@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/sidebar";
 import { BookmarkGrid } from "@/components/bookmark-grid";
 import { SearchBar } from "@/components/search-bar";
 import { Bookmark } from "@/types/bookmark";
+import { BatchToolbar } from "@/components/batch-toolbar";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,6 +42,40 @@ export default function Home() {
       else next.add(id);
       return next;
     });
+  }
+
+  function selectAll() {
+    setSelectedIds(new Set(bookmarks.map((b) => b.id)));
+  }
+
+  function deselectAll() {
+    setSelectedIds(new Set());
+  }
+
+  async function batchDelete() {
+    const ids = Array.from(selectedIds);
+    await Promise.all(ids.map((id) => fetch(`/api/bookmarks/${id}`, { method: "DELETE" })));
+    setBookmarks((prev) => prev.filter((b) => !selectedIds.has(b.id)));
+    setSelectedIds(new Set());
+    setBatchMode(false);
+  }
+
+  async function batchMove(folderId: number | null) {
+    const ids = Array.from(selectedIds);
+    await Promise.all(
+      ids.map((id) =>
+        fetch(`/api/bookmarks/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ folderId }),
+        })
+      )
+    );
+    setBookmarks((prev) =>
+      prev.map((b) => (selectedIds.has(b.id) ? { ...b, folderId } : b))
+    );
+    setSelectedIds(new Set());
+    setBatchMode(false);
   }
 
   function handleDelete(id: number) {
@@ -80,6 +115,17 @@ export default function Home() {
           />
         </div>
       </main>
+      {batchMode && (
+        <BatchToolbar
+          selectedCount={selectedIds.size}
+          totalCount={bookmarks.length}
+          onSelectAll={selectAll}
+          onDeselectAll={deselectAll}
+          onDelete={batchDelete}
+          onMove={batchMove}
+          onCancel={toggleBatchMode}
+        />
+      )}
     </div>
   );
 }
