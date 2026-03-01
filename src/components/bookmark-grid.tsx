@@ -6,9 +6,12 @@ import { Bookmark } from "@/types/bookmark";
 type Props = {
   bookmarks: Bookmark[];
   onDelete: (id: number) => void;
+  batchMode: boolean;
+  selectedIds: Set<number>;
+  onToggleSelect: (id: number) => void;
 };
 
-export function BookmarkGrid({ bookmarks, onDelete }: Props) {
+export function BookmarkGrid({ bookmarks, onDelete, batchMode, selectedIds, onToggleSelect }: Props) {
   if (bookmarks.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
@@ -20,7 +23,14 @@ export function BookmarkGrid({ bookmarks, onDelete }: Props) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
       {bookmarks.map((b) => (
-        <BookmarkCard key={b.id} bookmark={b} onDelete={onDelete} />
+        <BookmarkCard
+          key={b.id}
+          bookmark={b}
+          onDelete={onDelete}
+          batchMode={batchMode}
+          selected={selectedIds.has(b.id)}
+          onToggleSelect={onToggleSelect}
+        />
       ))}
     </div>
   );
