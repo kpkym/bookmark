@@ -43,11 +43,11 @@ export function Sidebar({
   }
 
   return (
-    <aside className="w-60 border-r border-gray-200 dark:border-gray-800 p-4 flex flex-col gap-4">
+    <aside className="w-60 border-r border-gray-200 dark:border-gray-800 p-4 flex flex-col gap-4 overflow-hidden">
       <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         <button
           onClick={() => onSetSidebarMode('folders')}
-          className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
+          className={`flex-1 px-3 py-1.5 text-sm font-medium transition-colors ${
             sidebarMode === 'folders'
               ? 'bg-blue-600 text-white'
               : 'hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -57,7 +57,7 @@ export function Sidebar({
         </button>
         <button
           onClick={() => onSetSidebarMode('domains')}
-          className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
+          className={`flex-1 px-3 py-1.5 text-sm font-medium transition-colors ${
             sidebarMode === 'domains'
               ? 'bg-blue-600 text-white'
               : 'hover:bg-gray-100 dark:hover:bg-gray-800'

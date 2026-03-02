@@ -11,15 +11,16 @@ export async function PATCH(
   const body = await request.json()
   const { title, description, folderId } = body
 
-  const updates: Record<string, string | number | Date | null> = {
-    updatedAt: new Date(),
-  }
+  const updates: Record<string, string | number | Date | null> = {}
   if (title !== undefined)
     updates.title = title.trim()
   if (description !== undefined)
     updates.description = description?.trim() || null
   if (folderId !== undefined)
     updates.folderId = folderId
+
+  if (title !== undefined || description !== undefined)
+    updates.updatedAt = new Date()
 
   const [updated] = await db
     .update(bookmarks)

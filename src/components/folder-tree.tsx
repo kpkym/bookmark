@@ -108,7 +108,7 @@ function DraggableFolder({
                 onClick={onSelect}
                 onContextMenu={onContextMenu}
                 className={`w-full text-left py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-1 pr-3 ${
-                  isSelected ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
+                  isSelected ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium' : ''
                 }`}
                 style={{ paddingLeft: `${depth * 16 + 8}px` }}
               >
@@ -165,7 +165,7 @@ function AllBookmarksDropTarget({ isSelected, onSelect }: { isSelected: boolean,
       <button
         onClick={onSelect}
         className={`w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${
-          isSelected ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
+          isSelected ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium' : ''
         }`}
       >
         All Bookmarks

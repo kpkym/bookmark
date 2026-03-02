@@ -57,19 +57,36 @@ export default function Home() {
     }
   }
 
-  const filteredBookmarks = useMemo(
-    () => selectedDomain
-      ? bookmarks.filter((b) => {
-          try {
-            return new URL(b.url).hostname === selectedDomain
-          }
-          catch {
-            return false
-          }
-        })
-      : bookmarks,
-    [bookmarks, selectedDomain],
-  )
+  const filteredBookmarks = useMemo(() => {
+    if (!selectedDomain)
+      return bookmarks
+    if (selectedDomain === '__others__') {
+      const domainCounts = new Map<string, number>()
+      for (const b of bookmarks) {
+        try {
+          const domain = new URL(b.url).hostname
+          domainCounts.set(domain, (domainCounts.get(domain) ?? 0) + 1)
+        }
+        catch {}
+      }
+      return bookmarks.filter((b) => {
+        try {
+          return (domainCounts.get(new URL(b.url).hostname) ?? 0) < 3
+        }
+        catch {
+          return false
+        }
+      })
+    }
+    return bookmarks.filter((b) => {
+      try {
+        return new URL(b.url).hostname === selectedDomain
+      }
+      catch {
+        return false
+      }
+    })
+  }, [bookmarks, selectedDomain])
 
   function toggleBatchMode() {
     if (batchMode) {
