@@ -1,4 +1,4 @@
-import { and, desc, eq, like, or } from 'drizzle-orm'
+import { and, desc, eq, inArray, like, or } from 'drizzle-orm'
 import { db } from '@/db'
 import { bookmarks } from '@/db/schema'
 import { deleteScreenshot, saveScreenshot } from '@/lib/screenshots'
@@ -6,7 +6,7 @@ import { deleteScreenshot, saveScreenshot } from '@/lib/screenshots'
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const query = searchParams.get('q')
-  const folderId = searchParams.get('folderId')
+  const folderIds = searchParams.get('folderIds')
 
   const conditions = []
 
@@ -21,8 +21,9 @@ export async function GET(request: Request) {
     )
   }
 
-  if (folderId) {
-    conditions.push(eq(bookmarks.folderId, Number(folderId)))
+  if (folderIds) {
+    const ids = folderIds.split(',').map(Number)
+    conditions.push(ids.length === 1 ? eq(bookmarks.folderId, ids[0]) : inArray(bookmarks.folderId, ids))
   }
 
   const results = await db

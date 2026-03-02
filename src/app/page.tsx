@@ -3,13 +3,13 @@
 import type { DragEndEvent } from '@dnd-kit/core'
 import type { Folder } from '@/lib/folder-utils'
 import type { Bookmark } from '@/types/bookmark'
-import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { DndContext, PointerSensor, pointerWithin, useSensor, useSensors } from '@dnd-kit/core'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BatchToolbar } from '@/components/batch-toolbar'
 import { BookmarkGrid } from '@/components/bookmark-grid'
 import { SearchBar } from '@/components/search-bar'
 import { Sidebar } from '@/components/sidebar'
-import { isDescendantOrSelf } from '@/lib/folder-utils'
+import { getDescendantIds, isDescendantOrSelf } from '@/lib/folder-utils'
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -31,13 +31,15 @@ export default function Home() {
     const params = new URLSearchParams()
     if (searchQuery)
       params.set('q', searchQuery)
-    if (selectedFolderId !== null)
-      params.set('folderId', String(selectedFolderId))
+    if (selectedFolderId !== null) {
+      const ids = getDescendantIds(folders, selectedFolderId)
+      params.set('folderIds', ids.join(','))
+    }
 
     fetch(`/api/bookmarks?${params}`)
       .then(r => r.json())
       .then(setBookmarks)
-  }, [searchQuery, selectedFolderId])
+  }, [searchQuery, selectedFolderId, folders])
 
   useEffect(() => {
     fetchBookmarks()
@@ -105,8 +107,11 @@ export default function Home() {
   )
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
+  const justDragged = useRef(false)
 
   async function handleDragEnd(event: DragEndEvent) {
+    justDragged.current = true
+    requestAnimationFrame(() => { justDragged.current = false })
     const { active, over } = event
     if (!over)
       return
@@ -155,8 +160,16 @@ export default function Home() {
   }
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      <div className="flex h-screen">
+    <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
+      <div
+        className="flex h-screen"
+        onClickCapture={(e) => {
+          if (justDragged.current) {
+            e.stopPropagation()
+            e.preventDefault()
+          }
+        }}
+      >
         <Sidebar
           selectedFolderId={selectedFolderId}
           onSelectFolder={setSelectedFolderId}

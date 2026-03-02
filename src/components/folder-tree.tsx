@@ -70,68 +70,65 @@ function DraggableFolder({
 
   const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined
 
-  function combinedRef(el: HTMLDivElement | null) {
-    setDragRef(el)
-    setDropRef(el)
-  }
-
   return (
     <div
-      ref={combinedRef}
+      ref={setDragRef}
       style={style}
-      className={`${isDragging ? 'opacity-50' : ''} ${isOver ? 'ring-1 ring-blue-400 rounded' : ''}`}
+      className={isDragging ? 'opacity-50' : ''}
     >
-      {editingId === folder.id
-        ? (
-            <input
-              autoFocus
-              value={editingName}
-              onChange={e => setEditingName(e.target.value)}
-              onKeyDown={async (e) => {
-                if (e.key === 'Enter') {
-                  await fetch(`/api/folders/${folder.id}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: editingName.trim() }),
-                  })
-                  setEditingId(null)
-                  fetchFolders()
-                }
-                if (e.key === 'Escape')
-                  setEditingId(null)
-              }}
-              onBlur={() => setEditingId(null)}
-              className="w-full px-3 py-1 text-sm rounded border border-blue-400 focus:outline-none dark:bg-gray-900"
-              style={{ paddingLeft: `${depth * 16 + 12}px` }}
-            />
-          )
-        : (
-            <button
-              {...attributes}
-              {...listeners}
-              onClick={onSelect}
-              onContextMenu={onContextMenu}
-              className={`w-full text-left py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-1 pr-3 ${
-                isSelected ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
-              }`}
-              style={{ paddingLeft: `${depth * 16 + 8}px` }}
-            >
-              <span
-                className={`flex-shrink-0 flex items-center justify-center w-4 h-4 text-gray-400 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''} ${!hasChildren ? 'invisible' : ''}`}
-                onClick={hasChildren
-                  ? (e) => {
-                      e.stopPropagation()
-                      onToggleExpand()
-                    }
-                  : undefined}
+      <div ref={setDropRef} className={isOver ? 'ring-1 ring-blue-400 rounded' : ''}>
+        {editingId === folder.id
+          ? (
+              <input
+                autoFocus
+                value={editingName}
+                onChange={e => setEditingName(e.target.value)}
+                onKeyDown={async (e) => {
+                  if (e.key === 'Enter') {
+                    await fetch(`/api/folders/${folder.id}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ name: editingName.trim() }),
+                    })
+                    setEditingId(null)
+                    fetchFolders()
+                  }
+                  if (e.key === 'Escape')
+                    setEditingId(null)
+                }}
+                onBlur={() => setEditingId(null)}
+                className="w-full px-3 py-1 text-sm rounded border border-blue-400 focus:outline-none dark:bg-gray-900"
+                style={{ paddingLeft: `${depth * 16 + 12}px` }}
+              />
+            )
+          : (
+              <button
+                {...attributes}
+                {...listeners}
+                onClick={onSelect}
+                onContextMenu={onContextMenu}
+                className={`w-full text-left py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-1 pr-3 ${
+                  isSelected ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
+                }`}
+                style={{ paddingLeft: `${depth * 16 + 8}px` }}
               >
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-3 h-3">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </span>
-              {folder.name}
-            </button>
-          )}
+                <span
+                  className={`flex-shrink-0 flex items-center justify-center w-4 h-4 text-gray-400 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''} ${!hasChildren ? 'invisible' : ''}`}
+                  onClick={hasChildren
+                    ? (e) => {
+                        e.stopPropagation()
+                        onToggleExpand()
+                      }
+                    : undefined}
+                >
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-3 h-3">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
+                {folder.name}
+              </button>
+            )}
+      </div>
       {children}
       {creatingUnder === folder.id && (
         <input
