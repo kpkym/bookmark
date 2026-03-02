@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bookmark Manager
+
+A self-hosted bookmark manager with screenshot capture via a Chrome extension.
+
+## Features
+
+- Save bookmarks with title, URL, and description
+- Capture and store page screenshots via Chrome extension
+- Organize bookmarks into nested folders
+- Search bookmarks by title or URL
+- Batch delete and move bookmarks across folders
+- Docker-ready for self-hosted deployment
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router, TypeScript, Tailwind CSS 4)
+- **Database:** SQLite via Drizzle ORM + better-sqlite3
+- **Package manager:** Bun
+- **Deployment:** Docker (standalone output)
 
 ## Getting Started
 
-First, run the development server:
+### Development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
+bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3136](http://localhost:3136) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Production (Docker)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+docker compose up --build
+```
 
-## Learn More
+The app will be available at [http://localhost:3136](http://localhost:3136). Data is persisted in the `./data` volume.
 
-To learn more about Next.js, take a look at the following resources:
+## Chrome Extension
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The `extension/` directory contains a Manifest V3 Chrome extension that captures a screenshot of the current tab and saves it to your bookmark server.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Setup:**
 
-## Deploy on Vercel
+1. Open `chrome://extensions` in Chrome
+2. Enable **Developer mode**
+3. Click **Load unpacked** and select the `extension/` folder
+4. Click the extension icon, set your server URL (e.g. `http://localhost:3136`), and save bookmarks with one click
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Database Migrations
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+# Generate migration from schema changes
+bunx drizzle-kit generate
+
+# Apply migrations
+bunx drizzle-kit migrate
+```
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── api/
+│       ├── bookmarks/          # GET, POST
+│       │   └── [id]/           # PATCH, DELETE
+│       ├── folders/            # GET, POST
+│       │   └── [id]/           # PATCH, DELETE
+│       ├── screenshots/[filename]/
+│       └── [...path]/          # CORS preflight
+├── components/
+│   ├── bookmark-card.tsx
+│   ├── bookmark-grid.tsx
+│   ├── batch-toolbar.tsx
+│   ├── folder-tree.tsx
+│   ├── search-bar.tsx
+│   └── sidebar.tsx
+├── db/
+│   ├── schema.ts
+│   └── index.ts
+└── lib/
+    └── screenshots.ts
+extension/                      # Chrome Extension (Manifest V3)
+data/                           # Runtime data (gitignored)
+├── bookmarks.db
+└── screenshots/
+drizzle/                        # Generated migrations
+```
+
+## API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/bookmarks` | List/search bookmarks |
+| POST | `/api/bookmarks` | Create bookmark (FormData with optional screenshot) |
+| PATCH | `/api/bookmarks/:id` | Update bookmark |
+| DELETE | `/api/bookmarks/:id` | Delete bookmark |
+| GET | `/api/folders` | List all folders |
+| POST | `/api/folders` | Create folder |
+| PATCH | `/api/folders/:id` | Rename folder |
+| DELETE | `/api/folders/:id` | Delete folder |
+| GET | `/api/screenshots/:filename` | Serve screenshot file |
