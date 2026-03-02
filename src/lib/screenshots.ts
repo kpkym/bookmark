@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import sharp from 'sharp'
 
 const SCREENSHOTS_DIR = path.join(process.cwd(), 'data', 'screenshots')
 
@@ -13,10 +14,12 @@ export async function saveScreenshot(
 ): Promise<string> {
   ensureScreenshotDir()
   const buffer = Buffer.from(await file.arrayBuffer())
-  const ext = file.type === 'image/webp' ? 'webp' : 'png'
-  const filename = `${id}.${ext}`
+  const filename = `${id}.webp`
   const filepath = path.join(SCREENSHOTS_DIR, filename)
-  fs.writeFileSync(filepath, buffer)
+  await sharp(buffer)
+    .resize({ width: 1280, withoutEnlargement: true })
+    .webp({ quality: 80 })
+    .toFile(filepath)
   return filename
 }
 

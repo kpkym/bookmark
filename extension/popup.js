@@ -19,7 +19,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Capture screenshot
   try {
     screenshotDataUrl = await chrome.tabs.captureVisibleTab(null, {
-      format: 'png',
+      format: 'jpeg',
+      quality: 80,
     })
     document.getElementById('screenshot-preview').src = screenshotDataUrl
   }
@@ -67,7 +68,7 @@ async function saveBookmark() {
 
   if (screenshotDataUrl) {
     const blob = await (await fetch(screenshotDataUrl)).blob()
-    formData.append('screenshot', blob, 'screenshot.png')
+    formData.append('screenshot', blob, 'screenshot.webp')
   }
 
   try {
