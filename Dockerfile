@@ -6,10 +6,11 @@ RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt
 COPY package.json bun.lock* ./
 RUN bun install --frozen-lockfile
 
-FROM base AS builder
+FROM node:20-slim AS builder
+WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN bun run build
+RUN npx next build
 
 FROM base AS runner
 WORKDIR /app
