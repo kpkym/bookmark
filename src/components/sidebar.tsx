@@ -10,6 +10,11 @@ interface Props {
 
 export function Sidebar({ selectedFolderId, onSelectFolder }: Props) {
   const [newFolderName, setNewFolderName] = useState('')
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  function refresh() {
+    setRefreshKey(k => k + 1)
+  }
 
   async function createFolder() {
     if (!newFolderName.trim())
@@ -20,7 +25,7 @@ export function Sidebar({ selectedFolderId, onSelectFolder }: Props) {
       body: JSON.stringify({ name: newFolderName.trim() }),
     })
     setNewFolderName('')
-    window.location.reload()
+    refresh()
   }
 
   return (
@@ -31,6 +36,8 @@ export function Sidebar({ selectedFolderId, onSelectFolder }: Props) {
       <FolderTree
         selectedFolderId={selectedFolderId}
         onSelectFolder={onSelectFolder}
+        refreshKey={refreshKey}
+        onMutate={refresh}
       />
       <div className="mt-auto">
         <input

@@ -11,16 +11,22 @@ interface Folder {
 interface Props {
   selectedFolderId: number | null
   onSelectFolder: (id: number | null) => void
+  refreshKey: number
+  onMutate: () => void
 }
 
-export function FolderTree({ selectedFolderId, onSelectFolder }: Props) {
+export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMutate: _onMutate }: Props) {
   const [folders, setFolders] = useState<Folder[]>([])
 
-  useEffect(() => {
+  function fetchFolders() {
     fetch('/api/folders')
       .then(r => r.json())
       .then(setFolders)
-  }, [])
+  }
+
+  useEffect(() => {
+    fetchFolders()
+  }, [refreshKey])
 
   const rootFolders = folders.filter(f => f.parentId === null)
 
