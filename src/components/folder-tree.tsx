@@ -1,11 +1,9 @@
 'use client'
 
-import type { DragEndEvent } from '@dnd-kit/core'
 import type { Folder } from '@/lib/folder-utils'
-import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
+import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { useEffect, useState } from 'react'
-import { isDescendantOrSelf } from '@/lib/folder-utils'
 
 export type { Folder }
 
@@ -64,6 +62,7 @@ function DraggableFolder({
 }) {
   const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({
     id: folder.id,
+    data: { type: 'folder' },
   })
   const { setNodeRef: setDropRef, isOver } = useDroppable({
     id: `drop-${folder.id}`,
@@ -211,39 +210,6 @@ export function FolderTree({ folders, fetchFolders, selectedFolderId, onSelectFo
     }
   }, [])
 
-  async function handleDragEnd(event: DragEndEvent) {
-    const draggedId = Number(event.active.id)
-    const overId = event.over?.id
-
-    if (!overId)
-      return
-
-    let newParentId: number | null
-
-    if (overId === 'root') {
-      newParentId = null
-    }
-    else {
-      newParentId = Number(String(overId).replace('drop-', ''))
-    }
-
-    // No-op if dropped on self or descendant
-    if (newParentId !== null && isDescendantOrSelf(folders, draggedId, newParentId))
-      return
-
-    // No-op if already in that parent
-    const dragged = folders.find(f => f.id === draggedId)
-    if (dragged?.parentId === newParentId)
-      return
-
-    await fetch(`/api/folders/${draggedId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ parentId: newParentId }),
-    })
-    fetchFolders()
-  }
-
   const rootFolders = folders.filter(f => f.parentId === null)
 
   function renderFolder(folder: Folder, depth: number = 0) {
@@ -287,15 +253,13 @@ export function FolderTree({ folders, fetchFolders, selectedFolderId, onSelectFo
 
   return (
     <>
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <nav className="space-y-0.5">
-          <AllBookmarksDropTarget
-            isSelected={selectedFolderId === null}
-            onSelect={() => onSelectFolder(null)}
-          />
-          {rootFolders.map(f => renderFolder(f))}
-        </nav>
-      </DndContext>
+      <nav className="space-y-0.5">
+        <AllBookmarksDropTarget
+          isSelected={selectedFolderId === null}
+          onSelect={() => onSelectFolder(null)}
+        />
+        {rootFolders.map(f => renderFolder(f))}
+      </nav>
       {contextMenu && (
         <div
           className="fixed z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded shadow-lg py-1 min-w-36"
