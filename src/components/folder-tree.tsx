@@ -144,9 +144,13 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
           </button>
           <button
             className="w-full text-left px-4 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 text-red-600 dark:text-red-400"
-            onClick={() => {
-              // delete — Task 5
+            onClick={async () => {
+              const folder = contextMenu.folder
               setContextMenu(null)
+              if (!window.confirm(`Delete "${folder.name}"? Bookmarks and subfolders will move to root.`))
+                return
+              await fetch(`/api/folders/${folder.id}`, { method: 'DELETE' })
+              fetchFolders()
             }}
           >
             Delete
