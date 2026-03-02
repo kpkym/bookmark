@@ -4,6 +4,7 @@ import type { Bookmark } from '@/types/bookmark'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 interface Props {
   bookmark: Bookmark
@@ -25,13 +26,74 @@ function formatDate(date: string) {
   return `${yyyy}-${MM}-${dd} ${HH}:${mm}:${ss}`
 }
 
+function DetailModal({ bookmark, folderName, onClose }: { bookmark: Bookmark, folderName: string | null, onClose: () => void }) {
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape')
+        onClose()
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 cursor-default"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget)
+          onClose()
+      }}
+    >
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-7xl w-full mx-4 overflow-hidden select-text cursor-auto">
+        {bookmark.screenshotPath && (
+          <img
+            src={`/api/screenshots/${bookmark.screenshotPath}`}
+            alt={bookmark.title}
+            className="w-full max-h-[44rem] object-cover object-top"
+          />
+        )}
+        <div className="p-5 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-base font-semibold leading-snug">{bookmark.title}</h2>
+            <button onClick={onClose} className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 break-all">{bookmark.url}</p>
+          {bookmark.description && <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{bookmark.description}</p>}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-400 pt-1 border-t border-gray-100 dark:border-gray-800">
+            {folderName && (
+              <span>
+                Folder:
+                <span className="text-gray-600 dark:text-gray-300">{folderName}</span>
+              </span>
+            )}
+            <span>
+              Created:
+              <span className="text-gray-600 dark:text-gray-300">{formatDate(bookmark.createdAt)}</span>
+            </span>
+            <span>
+              Updated:
+              <span className="text-gray-600 dark:text-gray-300">{formatDate(bookmark.updatedAt)}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function BookmarkCard({ bookmark, onDelete, batchMode, selected, onToggleSelect, folderName }: Props) {
   const [showMenu, setShowMenu] = useState(false)
+  const [showDetail, setShowDetail] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `bookmark-${bookmark.id}`,
     data: { type: 'bookmark', bookmarkId: bookmark.id },
+    disabled: showDetail,
   })
   const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined
 
@@ -133,7 +195,7 @@ export function BookmarkCard({ bookmark, onDelete, batchMode, selected, onToggle
         )}
       </div>
       {!batchMode && (
-        <div ref={menuRef}>
+        <div ref={menuRef} onPointerDown={e => e.stopPropagation()}>
           <button
             onClick={() => setShowMenu(!showMenu)}
             className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-black/50 text-white rounded px-2 py-0.5 text-xs transition-opacity"
@@ -142,6 +204,15 @@ export function BookmarkCard({ bookmark, onDelete, batchMode, selected, onToggle
           </button>
           {showMenu && (
             <div className="absolute top-8 right-2 bg-white dark:bg-gray-900 border rounded shadow-lg z-10">
+              <button
+                onClick={() => {
+                  setShowDetail(true)
+                  setShowMenu(false)
+                }}
+                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                Details
+              </button>
               <button
                 onClick={() => {
                   onDelete(bookmark.id)
@@ -154,6 +225,14 @@ export function BookmarkCard({ bookmark, onDelete, batchMode, selected, onToggle
             </div>
           )}
         </div>
+      )}
+      {showDetail && createPortal(
+        <DetailModal
+          bookmark={bookmark}
+          folderName={folderName}
+          onClose={() => setShowDetail(false)}
+        />,
+        document.body,
       )}
     </div>
   )
