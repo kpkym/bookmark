@@ -1,7 +1,7 @@
 import { and, desc, eq, like, or } from 'drizzle-orm'
 import { db } from '@/db'
 import { bookmarks } from '@/db/schema'
-import { saveScreenshot } from '@/lib/screenshots'
+import { deleteScreenshot, saveScreenshot } from '@/lib/screenshots'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -46,15 +46,39 @@ export async function POST(request: Request) {
     return new Response('url and title are required', { status: 400 })
   }
 
-  const [bookmark] = await db
-    .insert(bookmarks)
-    .values({
-      url,
-      title: title.trim(),
-      description: description?.trim() || null,
-      folderId: folderId ? Number(folderId) : null,
-    })
-    .returning()
+  let bookmark: typeof bookmarks.$inferSelect
+  try {
+    ;[bookmark] = await db
+      .insert(bookmarks)
+      .values({
+        url,
+        title: title.trim(),
+        description: description?.trim() || null,
+        folderId: folderId ? Number(folderId) : null,
+      })
+      .returning()
+  }
+  catch (e: unknown) {
+    if (e instanceof Error && e.message.includes('UNIQUE constraint failed')) {
+      const [existing] = await db.select().from(bookmarks).where(eq(bookmarks.url, url))
+      if (existing?.screenshotPath) {
+        deleteScreenshot(existing.screenshotPath)
+      }
+      await db.delete(bookmarks).where(eq(bookmarks.url, url))
+      ;[bookmark] = await db
+        .insert(bookmarks)
+        .values({
+          url,
+          title: title.trim(),
+          description: description?.trim() || null,
+          folderId: folderId ? Number(folderId) : null,
+        })
+        .returning()
+    }
+    else {
+      throw e
+    }
+  }
 
   if (screenshot && screenshot.size > 0) {
     const filename = await saveScreenshot(bookmark.id, screenshot)
