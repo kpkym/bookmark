@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Bookmark Screenshot",
+  "name": "Bookmark",
   "version": "1.0.0",
-  "description": "Save bookmarks with screenshots",
+  "description": "Save bookmarks",
   "permissions": ["activeTab", "tabs", "storage"],
   "action": {
     "default_popup": "popup.html",
