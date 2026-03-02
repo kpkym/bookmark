@@ -24,6 +24,8 @@ interface Props {
 export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMutate: _onMutate }: Props) {
   const [folders, setFolders] = useState<Folder[]>([])
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingName, setEditingName] = useState('')
 
   function fetchFolders() {
     fetch('/api/folders')
@@ -37,7 +39,8 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
 
   useEffect(() => {
     function close(e: MouseEvent | KeyboardEvent) {
-      if (e instanceof KeyboardEvent && e.key !== 'Escape') return
+      if (e instanceof KeyboardEvent && e.key !== 'Escape')
+        return
       setContextMenu(null)
     }
     window.addEventListener('click', close)
@@ -56,19 +59,46 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
 
     return (
       <div key={folder.id}>
-        <button
-          onClick={() => onSelectFolder(folder.id)}
-          onContextMenu={(e) => {
-            e.preventDefault()
-            setContextMenu({ x: e.clientX, y: e.clientY, folder })
-          }}
-          className={`w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${
-            isSelected ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
-          }`}
-          style={{ paddingLeft: `${depth * 16 + 12}px` }}
-        >
-          {folder.name}
-        </button>
+        {editingId === folder.id
+          ? (
+            <input
+              autoFocus
+              value={editingName}
+              onChange={e => setEditingName(e.target.value)}
+              onKeyDown={async (e) => {
+                if (e.key === 'Enter') {
+                  await fetch(`/api/folders/${folder.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: editingName.trim() }),
+                  })
+                  setEditingId(null)
+                  fetchFolders()
+                }
+                if (e.key === 'Escape') {
+                  setEditingId(null)
+                }
+              }}
+              onBlur={() => setEditingId(null)}
+              className="w-full px-3 py-1 text-sm rounded border border-blue-400 focus:outline-none dark:bg-gray-900"
+              style={{ paddingLeft: `${depth * 16 + 12}px` }}
+            />
+          )
+          : (
+            <button
+              onClick={() => onSelectFolder(folder.id)}
+              onContextMenu={(e) => {
+                e.preventDefault()
+                setContextMenu({ x: e.clientX, y: e.clientY, folder })
+              }}
+              className={`w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                isSelected ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
+              }`}
+              style={{ paddingLeft: `${depth * 16 + 12}px` }}
+            >
+              {folder.name}
+            </button>
+          )}
         {children.map(c => renderFolder(c, depth + 1))}
       </div>
     )
@@ -96,7 +126,8 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
           <button
             className="w-full text-left px-4 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
             onClick={() => {
-              // rename — Task 4
+              setEditingId(contextMenu.folder.id)
+              setEditingName(contextMenu.folder.name)
               setContextMenu(null)
             }}
           >
