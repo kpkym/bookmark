@@ -1,25 +1,26 @@
-"use client";
+'use client'
 
-import { FolderTree } from "./folder-tree";
-import { useState } from "react";
+import { useState } from 'react'
+import { FolderTree } from './folder-tree'
 
-type Props = {
-  selectedFolderId: number | null;
-  onSelectFolder: (id: number | null) => void;
-};
+interface Props {
+  selectedFolderId: number | null
+  onSelectFolder: (id: number | null) => void
+}
 
 export function Sidebar({ selectedFolderId, onSelectFolder }: Props) {
-  const [newFolderName, setNewFolderName] = useState("");
+  const [newFolderName, setNewFolderName] = useState('')
 
   async function createFolder() {
-    if (!newFolderName.trim()) return;
-    await fetch("/api/folders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    if (!newFolderName.trim())
+      return
+    await fetch('/api/folders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newFolderName.trim() }),
-    });
-    setNewFolderName("");
-    window.location.reload();
+    })
+    setNewFolderName('')
+    window.location.reload()
   }
 
   return (
@@ -36,11 +37,11 @@ export function Sidebar({ selectedFolderId, onSelectFolder }: Props) {
           type="text"
           placeholder="New folder..."
           value={newFolderName}
-          onChange={(e) => setNewFolderName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && createFolder()}
+          onChange={e => setNewFolderName(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && createFolder()}
           className="w-full px-2 py-1 text-sm border rounded dark:bg-gray-900 dark:border-gray-700"
         />
       </div>
     </aside>
-  );
+  )
 }

@@ -1,49 +1,49 @@
-import { db } from "@/db";
-import { bookmarks } from "@/db/schema";
-import { eq, like, or, desc, and } from "drizzle-orm";
-import { saveScreenshot } from "@/lib/screenshots";
+import { and, desc, eq, like, or } from 'drizzle-orm'
+import { db } from '@/db'
+import { bookmarks } from '@/db/schema'
+import { saveScreenshot } from '@/lib/screenshots'
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q");
-  const folderId = searchParams.get("folderId");
+  const { searchParams } = new URL(request.url)
+  const query = searchParams.get('q')
+  const folderId = searchParams.get('folderId')
 
-  const conditions = [];
+  const conditions = []
 
   if (query) {
-    const pattern = `%${query}%`;
+    const pattern = `%${query}%`
     conditions.push(
       or(
         like(bookmarks.title, pattern),
         like(bookmarks.url, pattern),
-        like(bookmarks.description, pattern)
-      )!
-    );
+        like(bookmarks.description, pattern),
+      )!,
+    )
   }
 
   if (folderId) {
-    conditions.push(eq(bookmarks.folderId, Number(folderId)));
+    conditions.push(eq(bookmarks.folderId, Number(folderId)))
   }
 
   const results = await db
     .select()
     .from(bookmarks)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .orderBy(desc(bookmarks.createdAt));
+    .orderBy(desc(bookmarks.createdAt))
 
-  return Response.json(results);
+  return Response.json(results)
 }
 
 export async function POST(request: Request) {
-  const formData = await request.formData();
-  const url = formData.get("url") as string;
-  const title = formData.get("title") as string;
-  const description = formData.get("description") as string | null;
-  const folderId = formData.get("folderId") as string | null;
-  const screenshot = formData.get("screenshot") as File | null;
+  const formData = await request.formData()
+  const url = formData.get('url') as string
+  const title = formData.get('title') as string
+  const description = formData.get('description') as string | null
+  const folderId = formData.get('folderId') as string | null
+  const screenshot = formData.get('screenshot') as File | null
 
   if (!url || !title) {
-    return new Response("url and title are required", { status: 400 });
+    return new Response('url and title are required', { status: 400 })
   }
 
   const [bookmark] = await db
@@ -54,16 +54,16 @@ export async function POST(request: Request) {
       description: description?.trim() || null,
       folderId: folderId ? Number(folderId) : null,
     })
-    .returning();
+    .returning()
 
   if (screenshot && screenshot.size > 0) {
-    const filename = await saveScreenshot(bookmark.id, screenshot);
+    const filename = await saveScreenshot(bookmark.id, screenshot)
     await db
       .update(bookmarks)
       .set({ screenshotPath: filename })
-      .where(eq(bookmarks.id, bookmark.id));
-    bookmark.screenshotPath = filename;
+      .where(eq(bookmarks.id, bookmark.id))
+    bookmark.screenshotPath = filename
   }
 
-  return Response.json(bookmark, { status: 201 });
+  return Response.json(bookmark, { status: 201 })
 }

@@ -43,16 +43,16 @@ bun add -d drizzle-kit @types/better-sqlite3
 
 Create `drizzle.config.ts`:
 ```typescript
-import { defineConfig } from "drizzle-kit";
+import { defineConfig } from 'drizzle-kit'
 
 export default defineConfig({
-  out: "./drizzle",
-  schema: "./src/db/schema.ts",
-  dialect: "sqlite",
+  out: './drizzle',
+  schema: './src/db/schema.ts',
+  dialect: 'sqlite',
   dbCredentials: {
-    url: "./data/bookmarks.db",
+    url: './data/bookmarks.db',
   },
-});
+})
 ```
 
 **Step 4: Create data directories and update .gitignore**
@@ -88,55 +88,55 @@ git commit -m "chore: scaffold Next.js project with Drizzle ORM config"
 
 Create `src/db/schema.ts`:
 ```typescript
-import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
-export const folders = sqliteTable("folders", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  name: text("name").notNull(),
-  parentId: integer("parent_id").references((): any => folders.id, {
-    onDelete: "set null",
+export const folders = sqliteTable('folders', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  parentId: integer('parent_id').references((): any => folders.id, {
+    onDelete: 'set null',
   }),
-  createdAt: integer("created_at", { mode: "timestamp" })
+  createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .$defaultFn(() => new Date()),
-});
+})
 
-export const bookmarks = sqliteTable("bookmarks", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  url: text("url").notNull().unique(),
-  title: text("title").notNull(),
-  description: text("description"),
-  screenshotPath: text("screenshot_path"),
-  folderId: integer("folder_id").references(() => folders.id, {
-    onDelete: "set null",
+export const bookmarks = sqliteTable('bookmarks', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  url: text('url').notNull().unique(),
+  title: text('title').notNull(),
+  description: text('description'),
+  screenshotPath: text('screenshot_path'),
+  folderId: integer('folder_id').references(() => folders.id, {
+    onDelete: 'set null',
   }),
-  createdAt: integer("created_at", { mode: "timestamp" })
+  createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .$defaultFn(() => new Date()),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
     .notNull()
     .$defaultFn(() => new Date()),
-});
+})
 ```
 
 **Step 2: Create database connection**
 
 Create `src/db/index.ts`:
 ```typescript
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import * as schema from "./schema";
-import path from "path";
-import fs from "fs";
+import fs from 'node:fs'
+import path from 'node:path'
+import Database from 'better-sqlite3'
+import { drizzle } from 'drizzle-orm/better-sqlite3'
+import * as schema from './schema'
 
-const dbDir = path.join(process.cwd(), "data");
-fs.mkdirSync(dbDir, { recursive: true });
+const dbDir = path.join(process.cwd(), 'data')
+fs.mkdirSync(dbDir, { recursive: true })
 
-const sqlite = new Database(path.join(dbDir, "bookmarks.db"));
-sqlite.pragma("journal_mode = WAL");
-sqlite.pragma("foreign_keys = ON");
+const sqlite = new Database(path.join(dbDir, 'bookmarks.db'))
+sqlite.pragma('journal_mode = WAL')
+sqlite.pragma('foreign_keys = ON')
 
-export const db = drizzle(sqlite, { schema });
+export const db = drizzle(sqlite, { schema })
 ```
 
 **Step 3: Generate and run migration**
@@ -174,21 +174,21 @@ git commit -m "feat: add database schema and connection (folders + bookmarks)"
 
 Create `src/app/api/folders/route.ts`:
 ```typescript
-import { db } from "@/db";
-import { folders } from "@/db/schema";
-import { eq, isNull } from "drizzle-orm";
+import { eq, isNull } from 'drizzle-orm'
+import { db } from '@/db'
+import { folders } from '@/db/schema'
 
 export async function GET() {
-  const allFolders = await db.select().from(folders);
-  return Response.json(allFolders);
+  const allFolders = await db.select().from(folders)
+  return Response.json(allFolders)
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const { name, parentId } = body;
+  const body = await request.json()
+  const { name, parentId } = body
 
-  if (!name || typeof name !== "string") {
-    return new Response("name is required", { status: 400 });
+  if (!name || typeof name !== 'string') {
+    return new Response('name is required', { status: 400 })
   }
 
   const [folder] = await db
@@ -197,9 +197,9 @@ export async function POST(request: Request) {
       name: name.trim(),
       parentId: parentId ?? null,
     })
-    .returning();
+    .returning()
 
-  return Response.json(folder, { status: 201 });
+  return Response.json(folder, { status: 201 })
 }
 ```
 
@@ -207,61 +207,63 @@ export async function POST(request: Request) {
 
 Create `src/app/api/folders/[id]/route.ts`:
 ```typescript
-import { db } from "@/db";
-import { folders, bookmarks } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm'
+import { db } from '@/db'
+import { bookmarks, folders } from '@/db/schema'
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const body = await request.json();
-  const { name, parentId } = body;
+  const { id } = await params
+  const body = await request.json()
+  const { name, parentId } = body
 
-  const updates: Record<string, any> = {};
-  if (name !== undefined) updates.name = name.trim();
-  if (parentId !== undefined) updates.parentId = parentId;
+  const updates: Record<string, any> = {}
+  if (name !== undefined)
+    updates.name = name.trim()
+  if (parentId !== undefined)
+    updates.parentId = parentId
 
   if (Object.keys(updates).length === 0) {
-    return new Response("nothing to update", { status: 400 });
+    return new Response('nothing to update', { status: 400 })
   }
 
   const [updated] = await db
     .update(folders)
     .set(updates)
     .where(eq(folders.id, Number(id)))
-    .returning();
+    .returning()
 
   if (!updated) {
-    return new Response("folder not found", { status: 404 });
+    return new Response('folder not found', { status: 404 })
   }
 
-  return Response.json(updated);
+  return Response.json(updated)
 }
 
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const folderId = Number(id);
+  const { id } = await params
+  const folderId = Number(id)
 
   // Move bookmarks in this folder to root
   await db
     .update(bookmarks)
     .set({ folderId: null })
-    .where(eq(bookmarks.folderId, folderId));
+    .where(eq(bookmarks.folderId, folderId))
 
   // Move child folders to root
   await db
     .update(folders)
     .set({ parentId: null })
-    .where(eq(folders.parentId, folderId));
+    .where(eq(folders.parentId, folderId))
 
-  await db.delete(folders).where(eq(folders.id, folderId));
+  await db.delete(folders).where(eq(folders.id, folderId))
 
-  return new Response(null, { status: 204 });
+  return new Response(null, { status: 204 })
 }
 ```
 
@@ -301,37 +303,37 @@ git commit -m "feat: add folders API (CRUD)"
 
 Create `src/lib/screenshots.ts`:
 ```typescript
-import fs from "fs";
-import path from "path";
+import fs from 'node:fs'
+import path from 'node:path'
 
-const SCREENSHOTS_DIR = path.join(process.cwd(), "data", "screenshots");
+const SCREENSHOTS_DIR = path.join(process.cwd(), 'data', 'screenshots')
 
 export function ensureScreenshotDir() {
-  fs.mkdirSync(SCREENSHOTS_DIR, { recursive: true });
+  fs.mkdirSync(SCREENSHOTS_DIR, { recursive: true })
 }
 
 export async function saveScreenshot(
   id: number,
   file: File
 ): Promise<string> {
-  ensureScreenshotDir();
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const ext = file.type === "image/webp" ? "webp" : "png";
-  const filename = `${id}.${ext}`;
-  const filepath = path.join(SCREENSHOTS_DIR, filename);
-  fs.writeFileSync(filepath, buffer);
-  return filename;
+  ensureScreenshotDir()
+  const buffer = Buffer.from(await file.arrayBuffer())
+  const ext = file.type === 'image/webp' ? 'webp' : 'png'
+  const filename = `${id}.${ext}`
+  const filepath = path.join(SCREENSHOTS_DIR, filename)
+  fs.writeFileSync(filepath, buffer)
+  return filename
 }
 
 export function deleteScreenshot(filename: string) {
-  const filepath = path.join(SCREENSHOTS_DIR, filename);
+  const filepath = path.join(SCREENSHOTS_DIR, filename)
   if (fs.existsSync(filepath)) {
-    fs.unlinkSync(filepath);
+    fs.unlinkSync(filepath)
   }
 }
 
 export function getScreenshotPath(filename: string): string {
-  return path.join(SCREENSHOTS_DIR, filename);
+  return path.join(SCREENSHOTS_DIR, filename)
 }
 ```
 
@@ -339,39 +341,39 @@ export function getScreenshotPath(filename: string): string {
 
 Create `src/app/api/bookmarks/route.ts`:
 ```typescript
-import { db } from "@/db";
-import { bookmarks } from "@/db/schema";
-import { eq, like, or, desc } from "drizzle-orm";
-import { saveScreenshot } from "@/lib/screenshots";
+import { desc, eq, like, or } from 'drizzle-orm'
+import { db } from '@/db'
+import { bookmarks } from '@/db/schema'
+import { saveScreenshot } from '@/lib/screenshots'
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q");
-  const folderId = searchParams.get("folderId");
+  const { searchParams } = new URL(request.url)
+  const query = searchParams.get('q')
+  const folderId = searchParams.get('folderId')
 
-  let where;
-  const conditions = [];
+  let where
+  const conditions = []
 
   if (query) {
-    const pattern = `%${query}%`;
+    const pattern = `%${query}%`
     conditions.push(
       or(
         like(bookmarks.title, pattern),
         like(bookmarks.url, pattern),
         like(bookmarks.description, pattern)
       )!
-    );
+    )
   }
 
   if (folderId) {
-    conditions.push(eq(bookmarks.folderId, Number(folderId)));
+    conditions.push(eq(bookmarks.folderId, Number(folderId)))
   }
 
   const results = await db
     .select()
     .from(bookmarks)
     .where(conditions.length > 0 ? (conditions.length === 1 ? conditions[0] : undefined) : undefined)
-    .orderBy(desc(bookmarks.createdAt));
+    .orderBy(desc(bookmarks.createdAt))
 
   // If we have multiple conditions, filter properly
   if (conditions.length > 1) {
@@ -379,27 +381,27 @@ export async function GET(request: Request) {
       .select()
       .from(bookmarks)
       .where(conditions[0])
-      .orderBy(desc(bookmarks.createdAt));
+      .orderBy(desc(bookmarks.createdAt))
 
     const filtered = allResults.filter(
-      (b) => !folderId || b.folderId === Number(folderId)
-    );
-    return Response.json(filtered);
+      b => !folderId || b.folderId === Number(folderId)
+    )
+    return Response.json(filtered)
   }
 
-  return Response.json(results);
+  return Response.json(results)
 }
 
 export async function POST(request: Request) {
-  const formData = await request.formData();
-  const url = formData.get("url") as string;
-  const title = formData.get("title") as string;
-  const description = formData.get("description") as string | null;
-  const folderId = formData.get("folderId") as string | null;
-  const screenshot = formData.get("screenshot") as File | null;
+  const formData = await request.formData()
+  const url = formData.get('url') as string
+  const title = formData.get('title') as string
+  const description = formData.get('description') as string | null
+  const folderId = formData.get('folderId') as string | null
+  const screenshot = formData.get('screenshot') as File | null
 
   if (!url || !title) {
-    return new Response("url and title are required", { status: 400 });
+    return new Response('url and title are required', { status: 400 })
   }
 
   const [bookmark] = await db
@@ -410,18 +412,18 @@ export async function POST(request: Request) {
       description: description?.trim() || null,
       folderId: folderId ? Number(folderId) : null,
     })
-    .returning();
+    .returning()
 
   if (screenshot && screenshot.size > 0) {
-    const filename = await saveScreenshot(bookmark.id, screenshot);
+    const filename = await saveScreenshot(bookmark.id, screenshot)
     await db
       .update(bookmarks)
       .set({ screenshotPath: filename })
-      .where(eq(bookmarks.id, bookmark.id));
-    bookmark.screenshotPath = filename;
+      .where(eq(bookmarks.id, bookmark.id))
+    bookmark.screenshotPath = filename
   }
 
-  return Response.json(bookmark, { status: 201 });
+  return Response.json(bookmark, { status: 201 })
 }
 ```
 
@@ -429,60 +431,63 @@ export async function POST(request: Request) {
 
 Create `src/app/api/bookmarks/[id]/route.ts`:
 ```typescript
-import { db } from "@/db";
-import { bookmarks } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { deleteScreenshot } from "@/lib/screenshots";
+import { eq } from 'drizzle-orm'
+import { db } from '@/db'
+import { bookmarks } from '@/db/schema'
+import { deleteScreenshot } from '@/lib/screenshots'
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const body = await request.json();
-  const { title, description, folderId } = body;
+  const { id } = await params
+  const body = await request.json()
+  const { title, description, folderId } = body
 
   const updates: Record<string, any> = {
     updatedAt: new Date(),
-  };
-  if (title !== undefined) updates.title = title.trim();
-  if (description !== undefined) updates.description = description?.trim() || null;
-  if (folderId !== undefined) updates.folderId = folderId;
+  }
+  if (title !== undefined)
+    updates.title = title.trim()
+  if (description !== undefined)
+    updates.description = description?.trim() || null
+  if (folderId !== undefined)
+    updates.folderId = folderId
 
   const [updated] = await db
     .update(bookmarks)
     .set(updates)
     .where(eq(bookmarks.id, Number(id)))
-    .returning();
+    .returning()
 
   if (!updated) {
-    return new Response("bookmark not found", { status: 404 });
+    return new Response('bookmark not found', { status: 404 })
   }
 
-  return Response.json(updated);
+  return Response.json(updated)
 }
 
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  const { id } = await params
 
   const [bookmark] = await db
     .select()
     .from(bookmarks)
-    .where(eq(bookmarks.id, Number(id)));
+    .where(eq(bookmarks.id, Number(id)))
 
   if (!bookmark) {
-    return new Response("bookmark not found", { status: 404 });
+    return new Response('bookmark not found', { status: 404 })
   }
 
   if (bookmark.screenshotPath) {
-    deleteScreenshot(bookmark.screenshotPath);
+    deleteScreenshot(bookmark.screenshotPath)
   }
 
-  await db.delete(bookmarks).where(eq(bookmarks.id, Number(id)));
-  return new Response(null, { status: 204 });
+  await db.delete(bookmarks).where(eq(bookmarks.id, Number(id)))
+  return new Response(null, { status: 204 })
 }
 ```
 
@@ -490,28 +495,28 @@ export async function DELETE(
 
 Create `src/app/api/screenshots/[filename]/route.ts`:
 ```typescript
-import { getScreenshotPath } from "@/lib/screenshots";
-import fs from "fs";
+import fs from 'node:fs'
+import { getScreenshotPath } from '@/lib/screenshots'
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ filename: string }> }
 ) {
-  const { filename } = await params;
-  const filepath = getScreenshotPath(filename);
+  const { filename } = await params
+  const filepath = getScreenshotPath(filename)
 
   if (!fs.existsSync(filepath)) {
-    return new Response("not found", { status: 404 });
+    return new Response('not found', { status: 404 })
   }
 
-  const buffer = fs.readFileSync(filepath);
-  const contentType = filename.endsWith(".webp")
-    ? "image/webp"
-    : "image/png";
+  const buffer = fs.readFileSync(filepath)
+  const contentType = filename.endsWith('.webp')
+    ? 'image/webp'
+    : 'image/png'
 
   return new Response(buffer, {
-    headers: { "Content-Type": contentType, "Cache-Control": "public, max-age=31536000" },
-  });
+    headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=31536000' },
+  })
 }
 ```
 
@@ -555,50 +560,50 @@ git commit -m "feat: add bookmarks API (CRUD with screenshot upload/serve)"
 
 Create `src/components/folder-tree.tsx`:
 ```tsx
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react'
 
-type Folder = {
-  id: number;
-  name: string;
-  parentId: number | null;
-};
+interface Folder {
+  id: number
+  name: string
+  parentId: number | null
+}
 
-type Props = {
-  selectedFolderId: number | null;
-  onSelectFolder: (id: number | null) => void;
-};
+interface Props {
+  selectedFolderId: number | null
+  onSelectFolder: (id: number | null) => void
+}
 
 export function FolderTree({ selectedFolderId, onSelectFolder }: Props) {
-  const [folders, setFolders] = useState<Folder[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([])
 
   useEffect(() => {
-    fetch("/api/folders")
-      .then((r) => r.json())
-      .then(setFolders);
-  }, []);
+    fetch('/api/folders')
+      .then(r => r.json())
+      .then(setFolders)
+  }, [])
 
-  const rootFolders = folders.filter((f) => f.parentId === null);
+  const rootFolders = folders.filter(f => f.parentId === null)
 
   function renderFolder(folder: Folder, depth: number = 0) {
-    const children = folders.filter((f) => f.parentId === folder.id);
-    const isSelected = selectedFolderId === folder.id;
+    const children = folders.filter(f => f.parentId === folder.id)
+    const isSelected = selectedFolderId === folder.id
 
     return (
       <div key={folder.id}>
         <button
           onClick={() => onSelectFolder(folder.id)}
           className={`w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${
-            isSelected ? "bg-gray-100 dark:bg-gray-800 font-medium" : ""
+            isSelected ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
           }`}
           style={{ paddingLeft: `${depth * 16 + 12}px` }}
         >
           {folder.name}
         </button>
-        {children.map((c) => renderFolder(c, depth + 1))}
+        {children.map(c => renderFolder(c, depth + 1))}
       </div>
-    );
+    )
   }
 
   return (
@@ -606,14 +611,14 @@ export function FolderTree({ selectedFolderId, onSelectFolder }: Props) {
       <button
         onClick={() => onSelectFolder(null)}
         className={`w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${
-          selectedFolderId === null ? "bg-gray-100 dark:bg-gray-800 font-medium" : ""
+          selectedFolderId === null ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
         }`}
       >
         All Bookmarks
       </button>
-      {rootFolders.map((f) => renderFolder(f))}
+      {rootFolders.map(f => renderFolder(f))}
     </nav>
-  );
+  )
 }
 ```
 
@@ -621,29 +626,30 @@ export function FolderTree({ selectedFolderId, onSelectFolder }: Props) {
 
 Create `src/components/sidebar.tsx`:
 ```tsx
-"use client";
+'use client'
 
-import { FolderTree } from "./folder-tree";
-import { useState } from "react";
+import { useState } from 'react'
+import { FolderTree } from './folder-tree'
 
-type Props = {
-  selectedFolderId: number | null;
-  onSelectFolder: (id: number | null) => void;
-};
+interface Props {
+  selectedFolderId: number | null
+  onSelectFolder: (id: number | null) => void
+}
 
 export function Sidebar({ selectedFolderId, onSelectFolder }: Props) {
-  const [newFolderName, setNewFolderName] = useState("");
+  const [newFolderName, setNewFolderName] = useState('')
 
   async function createFolder() {
-    if (!newFolderName.trim()) return;
-    await fetch("/api/folders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    if (!newFolderName.trim())
+      return
+    await fetch('/api/folders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newFolderName.trim() }),
-    });
-    setNewFolderName("");
+    })
+    setNewFolderName('')
     // Trigger re-render by changing key — simple approach
-    window.location.reload();
+    window.location.reload()
   }
 
   return (
@@ -660,13 +666,13 @@ export function Sidebar({ selectedFolderId, onSelectFolder }: Props) {
           type="text"
           placeholder="New folder..."
           value={newFolderName}
-          onChange={(e) => setNewFolderName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && createFolder()}
+          onChange={e => setNewFolderName(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && createFolder()}
           className="w-full px-2 py-1 text-sm border rounded dark:bg-gray-900 dark:border-gray-700"
         />
       </div>
     </aside>
-  );
+  )
 }
 ```
 
@@ -692,43 +698,45 @@ git commit -m "feat: add sidebar with folder tree navigation"
 
 Create `src/components/bookmark-card.tsx`:
 ```tsx
-"use client";
+'use client'
 
-import { useState } from "react";
+import { useState } from 'react'
 
-type Bookmark = {
-  id: number;
-  url: string;
-  title: string;
-  description: string | null;
-  screenshotPath: string | null;
-  folderId: number | null;
-  createdAt: string;
-};
+interface Bookmark {
+  id: number
+  url: string
+  title: string
+  description: string | null
+  screenshotPath: string | null
+  folderId: number | null
+  createdAt: string
+}
 
-type Props = {
-  bookmark: Bookmark;
-  onDelete: (id: number) => void;
-};
+interface Props {
+  bookmark: Bookmark
+  onDelete: (id: number) => void
+}
 
 export function BookmarkCard({ bookmark, onDelete }: Props) {
-  const [showMenu, setShowMenu] = useState(false);
+  const [showMenu, setShowMenu] = useState(false)
 
   return (
     <div className="group relative rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-md transition-shadow">
       <a href={bookmark.url} target="_blank" rel="noopener noreferrer">
-        {bookmark.screenshotPath ? (
-          <img
-            src={`/api/screenshots/${bookmark.screenshotPath}`}
-            alt={bookmark.title}
-            className="w-full h-40 object-cover object-top"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-40 bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 text-sm">
-            No screenshot
-          </div>
-        )}
+        {bookmark.screenshotPath
+          ? (
+              <img
+                src={`/api/screenshots/${bookmark.screenshotPath}`}
+                alt={bookmark.title}
+                className="w-full h-40 object-cover object-top"
+                loading="lazy"
+              />
+            )
+          : (
+              <div className="w-full h-40 bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 text-sm">
+                No screenshot
+              </div>
+            )}
       </a>
       <div className="p-3">
         <h3 className="font-medium text-sm truncate">{bookmark.title}</h3>
@@ -749,8 +757,8 @@ export function BookmarkCard({ bookmark, onDelete }: Props) {
         <div className="absolute top-8 right-2 bg-white dark:bg-gray-900 border rounded shadow-lg z-10">
           <button
             onClick={() => {
-              onDelete(bookmark.id);
-              setShowMenu(false);
+              onDelete(bookmark.id)
+              setShowMenu(false)
             }}
             className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-800"
           >
@@ -759,7 +767,7 @@ export function BookmarkCard({ bookmark, onDelete }: Props) {
         </div>
       )}
     </div>
-  );
+  )
 }
 ```
 
@@ -767,42 +775,44 @@ export function BookmarkCard({ bookmark, onDelete }: Props) {
 
 Create `src/components/bookmark-grid.tsx`:
 ```tsx
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
-import { BookmarkCard } from "./bookmark-card";
+import { useEffect, useState } from 'react'
+import { BookmarkCard } from './bookmark-card'
 
-type Bookmark = {
-  id: number;
-  url: string;
-  title: string;
-  description: string | null;
-  screenshotPath: string | null;
-  folderId: number | null;
-  createdAt: string;
-};
+interface Bookmark {
+  id: number
+  url: string
+  title: string
+  description: string | null
+  screenshotPath: string | null
+  folderId: number | null
+  createdAt: string
+}
 
-type Props = {
-  searchQuery: string;
-  folderId: number | null;
-};
+interface Props {
+  searchQuery: string
+  folderId: number | null
+}
 
 export function BookmarkGrid({ searchQuery, folderId }: Props) {
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([])
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (searchQuery) params.set("q", searchQuery);
-    if (folderId !== null) params.set("folderId", String(folderId));
+    const params = new URLSearchParams()
+    if (searchQuery)
+      params.set('q', searchQuery)
+    if (folderId !== null)
+      params.set('folderId', String(folderId))
 
     fetch(`/api/bookmarks?${params}`)
-      .then((r) => r.json())
-      .then(setBookmarks);
-  }, [searchQuery, folderId]);
+      .then(r => r.json())
+      .then(setBookmarks)
+  }, [searchQuery, folderId])
 
   async function handleDelete(id: number) {
-    await fetch(`/api/bookmarks/${id}`, { method: "DELETE" });
-    setBookmarks((prev) => prev.filter((b) => b.id !== id));
+    await fetch(`/api/bookmarks/${id}`, { method: 'DELETE' })
+    setBookmarks(prev => prev.filter(b => b.id !== id))
   }
 
   if (bookmarks.length === 0) {
@@ -810,16 +820,16 @@ export function BookmarkGrid({ searchQuery, folderId }: Props) {
       <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
         No bookmarks yet. Use the Chrome extension to save some!
       </div>
-    );
+    )
   }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
-      {bookmarks.map((b) => (
+      {bookmarks.map(b => (
         <BookmarkCard key={b.id} bookmark={b} onDelete={handleDelete} />
       ))}
     </div>
-  );
+  )
 }
 ```
 
@@ -827,12 +837,12 @@ export function BookmarkGrid({ searchQuery, folderId }: Props) {
 
 Create `src/components/search-bar.tsx`:
 ```tsx
-"use client";
+'use client'
 
-type Props = {
-  value: string;
-  onChange: (value: string) => void;
-};
+interface Props {
+  value: string
+  onChange: (value: string) => void
+}
 
 export function SearchBar({ value, onChange }: Props) {
   return (
@@ -840,10 +850,10 @@ export function SearchBar({ value, onChange }: Props) {
       type="search"
       placeholder="Search bookmarks..."
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={e => onChange(e.target.value)}
       className="w-full max-w-md px-4 py-2 text-sm border rounded-lg dark:bg-gray-900 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
     />
-  );
+  )
 }
 ```
 
@@ -851,16 +861,16 @@ export function SearchBar({ value, onChange }: Props) {
 
 Replace `src/app/page.tsx`:
 ```tsx
-"use client";
+'use client'
 
-import { useState } from "react";
-import { Sidebar } from "@/components/sidebar";
-import { BookmarkGrid } from "@/components/bookmark-grid";
-import { SearchBar } from "@/components/search-bar";
+import { useState } from 'react'
+import { BookmarkGrid } from '@/components/bookmark-grid'
+import { SearchBar } from '@/components/search-bar'
+import { Sidebar } from '@/components/sidebar'
 
 export default function Home() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null)
 
   return (
     <div className="flex h-screen">
@@ -877,7 +887,7 @@ export default function Home() {
         </div>
       </main>
     </div>
-  );
+  )
 }
 ```
 
@@ -1009,90 +1019,95 @@ textarea { resize: vertical; }
 
 Create `extension/popup.js`:
 ```javascript
-let screenshotDataUrl = null;
+let screenshotDataUrl = null
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // Load saved server URL
-  const stored = await chrome.storage.local.get("serverUrl");
-  const serverUrlInput = document.getElementById("serverUrl");
-  serverUrlInput.value = stored.serverUrl || "http://localhost:3000";
+  const stored = await chrome.storage.local.get('serverUrl')
+  const serverUrlInput = document.getElementById('serverUrl')
+  serverUrlInput.value = stored.serverUrl || 'http://localhost:3000'
 
   // Save server URL on change
-  serverUrlInput.addEventListener("change", () => {
-    chrome.storage.local.set({ serverUrl: serverUrlInput.value });
-  });
+  serverUrlInput.addEventListener('change', () => {
+    chrome.storage.local.set({ serverUrl: serverUrlInput.value })
+  })
 
   // Get current tab info
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  document.getElementById("title").value = tab.title || "";
-  document.getElementById("url").value = tab.url || "";
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  document.getElementById('title').value = tab.title || ''
+  document.getElementById('url').value = tab.url || ''
 
   // Capture screenshot
   try {
     screenshotDataUrl = await chrome.tabs.captureVisibleTab(null, {
-      format: "png",
-    });
-    document.getElementById("screenshot-preview").src = screenshotDataUrl;
-  } catch (err) {
-    console.error("Failed to capture screenshot:", err);
+      format: 'png',
+    })
+    document.getElementById('screenshot-preview').src = screenshotDataUrl
+  }
+  catch (err) {
+    console.error('Failed to capture screenshot:', err)
   }
 
   // Load folders
   try {
-    const serverUrl = serverUrlInput.value;
-    const res = await fetch(`${serverUrl}/api/folders`);
-    const folders = await res.json();
-    const select = document.getElementById("folder");
+    const serverUrl = serverUrlInput.value
+    const res = await fetch(`${serverUrl}/api/folders`)
+    const folders = await res.json()
+    const select = document.getElementById('folder')
     folders.forEach((f) => {
-      const option = document.createElement("option");
-      option.value = f.id;
-      option.textContent = f.name;
-      select.appendChild(option);
-    });
-  } catch (err) {
-    console.error("Failed to load folders:", err);
+      const option = document.createElement('option')
+      option.value = f.id
+      option.textContent = f.name
+      select.appendChild(option)
+    })
+  }
+  catch (err) {
+    console.error('Failed to load folders:', err)
   }
 
   // Save button
-  document.getElementById("save").addEventListener("click", saveBookmark);
-});
+  document.getElementById('save').addEventListener('click', saveBookmark)
+})
 
 async function saveBookmark() {
-  const btn = document.getElementById("save");
-  const status = document.getElementById("status");
-  btn.disabled = true;
-  status.textContent = "Saving...";
-  status.className = "";
+  const btn = document.getElementById('save')
+  const status = document.getElementById('status')
+  btn.disabled = true
+  status.textContent = 'Saving...'
+  status.className = ''
 
-  const serverUrl = document.getElementById("serverUrl").value;
-  const formData = new FormData();
-  formData.append("url", document.getElementById("url").value);
-  formData.append("title", document.getElementById("title").value);
-  formData.append("description", document.getElementById("description").value);
+  const serverUrl = document.getElementById('serverUrl').value
+  const formData = new FormData()
+  formData.append('url', document.getElementById('url').value)
+  formData.append('title', document.getElementById('title').value)
+  formData.append('description', document.getElementById('description').value)
 
-  const folderId = document.getElementById("folder").value;
-  if (folderId) formData.append("folderId", folderId);
+  const folderId = document.getElementById('folder').value
+  if (folderId)
+    formData.append('folderId', folderId)
 
   if (screenshotDataUrl) {
-    const blob = await (await fetch(screenshotDataUrl)).blob();
-    formData.append("screenshot", blob, "screenshot.png");
+    const blob = await (await fetch(screenshotDataUrl)).blob()
+    formData.append('screenshot', blob, 'screenshot.png')
   }
 
   try {
     const res = await fetch(`${serverUrl}/api/bookmarks`, {
-      method: "POST",
+      method: 'POST',
       body: formData,
-    });
+    })
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok)
+      throw new Error(`HTTP ${res.status}`)
 
-    status.textContent = "Saved!";
-    status.className = "success";
-    setTimeout(() => window.close(), 1000);
-  } catch (err) {
-    status.textContent = `Error: ${err.message}`;
-    status.className = "error";
-    btn.disabled = false;
+    status.textContent = 'Saved!'
+    status.className = 'success'
+    setTimeout(() => window.close(), 1000)
+  }
+  catch (err) {
+    status.textContent = `Error: ${err.message}`
+    status.className = 'error'
+    btn.disabled = false
   }
 }
 ```
@@ -1133,24 +1148,24 @@ git commit -m "feat: add Chrome extension with screenshot capture and bookmark s
 
 The Chrome extension runs from `chrome-extension://` origin and needs CORS headers. Update `next.config.ts`:
 ```typescript
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/api/:path*",
+        source: '/api/:path*',
         headers: [
-          { key: "Access-Control-Allow-Origin", value: "*" },
-          { key: "Access-Control-Allow-Methods", value: "GET, POST, PATCH, DELETE, OPTIONS" },
-          { key: "Access-Control-Allow-Headers", value: "Content-Type" },
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PATCH, DELETE, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type' },
         ],
       },
-    ];
+    ]
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig
 ```
 
 **Step 2: Add OPTIONS handler for preflight**
@@ -1161,11 +1176,11 @@ export async function OPTIONS() {
   return new Response(null, {
     status: 204,
     headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
     },
-  });
+  })
 }
 ```
 
@@ -1237,9 +1252,9 @@ CMD ["bun", "server.js"]
 Add `output: "standalone"` to `next.config.ts`:
 ```typescript
 const nextConfig: NextConfig = {
-  output: "standalone",
+  output: 'standalone',
   // ... existing headers config
-};
+}
 ```
 
 **Step 4: Create docker-compose.yml**
@@ -1250,7 +1265,7 @@ services:
   bookmark:
     build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
     volumes:
       - ./data:/app/data
     restart: unless-stopped

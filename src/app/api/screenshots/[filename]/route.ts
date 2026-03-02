@@ -1,23 +1,23 @@
-import { getScreenshotPath } from "@/lib/screenshots";
-import fs from "fs";
+import fs from 'node:fs'
+import { getScreenshotPath } from '@/lib/screenshots'
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ filename: string }> }
+  { params }: { params: Promise<{ filename: string }> },
 ) {
-  const { filename } = await params;
-  const filepath = getScreenshotPath(filename);
+  const { filename } = await params
+  const filepath = getScreenshotPath(filename)
 
   if (!fs.existsSync(filepath)) {
-    return new Response("not found", { status: 404 });
+    return new Response('not found', { status: 404 })
   }
 
-  const buffer = fs.readFileSync(filepath);
-  const contentType = filename.endsWith(".webp")
-    ? "image/webp"
-    : "image/png";
+  const buffer = fs.readFileSync(filepath)
+  const contentType = filename.endsWith('.webp')
+    ? 'image/webp'
+    : 'image/png'
 
   return new Response(buffer, {
-    headers: { "Content-Type": contentType, "Cache-Control": "public, max-age=31536000" },
-  });
+    headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=31536000' },
+  })
 }
