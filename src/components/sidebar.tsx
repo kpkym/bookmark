@@ -2,16 +2,32 @@
 
 import type { Folder } from '@/lib/folder-utils'
 import { useState } from 'react'
+import { DomainList } from './domain-list'
 import { FolderTree } from './folder-tree'
 
 interface Props {
+  sidebarMode: 'folders' | 'domains'
+  onSetSidebarMode: (mode: 'folders' | 'domains') => void
   selectedFolderId: number | null
   onSelectFolder: (id: number | null) => void
   folders: Folder[]
   fetchFolders: () => void
+  bookmarks: { url: string }[]
+  selectedDomain: string | null
+  onSelectDomain: (domain: string | null) => void
 }
 
-export function Sidebar({ selectedFolderId, onSelectFolder, folders, fetchFolders }: Props) {
+export function Sidebar({
+  sidebarMode,
+  onSetSidebarMode,
+  selectedFolderId,
+  onSelectFolder,
+  folders,
+  fetchFolders,
+  bookmarks,
+  selectedDomain,
+  onSelectDomain,
+}: Props) {
   const [newFolderName, setNewFolderName] = useState('')
 
   async function createFolder() {
@@ -28,26 +44,57 @@ export function Sidebar({ selectedFolderId, onSelectFolder, folders, fetchFolder
 
   return (
     <aside className="w-60 border-r border-gray-200 dark:border-gray-800 p-4 flex flex-col gap-4">
-      <h2 className="font-semibold text-sm text-gray-500 uppercase tracking-wide">
-        Folders
-      </h2>
-      <FolderTree
-        folders={folders}
-        fetchFolders={fetchFolders}
-        selectedFolderId={selectedFolderId}
-        onSelectFolder={onSelectFolder}
-        onMutate={fetchFolders}
-      />
-      <div className="mt-auto">
-        <input
-          type="text"
-          placeholder="New folder..."
-          value={newFolderName}
-          onChange={e => setNewFolderName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && createFolder()}
-          className="w-full px-2 py-1 text-sm border rounded dark:bg-gray-900 dark:border-gray-700"
-        />
+      <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <button
+          onClick={() => onSetSidebarMode('folders')}
+          className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
+            sidebarMode === 'folders'
+              ? 'bg-blue-600 text-white'
+              : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+          }`}
+        >
+          Folders
+        </button>
+        <button
+          onClick={() => onSetSidebarMode('domains')}
+          className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
+            sidebarMode === 'domains'
+              ? 'bg-blue-600 text-white'
+              : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+          }`}
+        >
+          Domains
+        </button>
       </div>
+      {sidebarMode === 'folders'
+        ? (
+            <>
+              <FolderTree
+                folders={folders}
+                fetchFolders={fetchFolders}
+                selectedFolderId={selectedFolderId}
+                onSelectFolder={onSelectFolder}
+                onMutate={fetchFolders}
+              />
+              <div className="mt-auto">
+                <input
+                  type="text"
+                  placeholder="New folder..."
+                  value={newFolderName}
+                  onChange={e => setNewFolderName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && createFolder()}
+                  className="w-full px-2 py-1 text-sm border rounded dark:bg-gray-900 dark:border-gray-700"
+                />
+              </div>
+            </>
+          )
+        : (
+            <DomainList
+              bookmarks={bookmarks}
+              selectedDomain={selectedDomain}
+              onSelectDomain={onSelectDomain}
+            />
+          )}
     </aside>
   )
 }
