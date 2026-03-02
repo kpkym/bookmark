@@ -1,6 +1,8 @@
 'use client'
 
 import type { Bookmark } from '@/types/bookmark'
+import { useDraggable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 import { useEffect, useRef, useState } from 'react'
 
 interface Props {
@@ -14,6 +16,12 @@ interface Props {
 export function BookmarkCard({ bookmark, onDelete, batchMode, selected, onToggleSelect }: Props) {
   const [showMenu, setShowMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `bookmark-${bookmark.id}`,
+    data: { type: 'bookmark', bookmarkId: bookmark.id },
+  })
+  const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined
 
   useEffect(() => {
     if (!showMenu)
@@ -29,8 +37,14 @@ export function BookmarkCard({ bookmark, onDelete, batchMode, selected, onToggle
 
   return (
     <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
       onClick={batchMode ? () => onToggleSelect(bookmark.id) : undefined}
       className={`group relative rounded-lg border overflow-hidden transition-shadow cursor-pointer ${
+        isDragging ? 'opacity-50' : ''
+      } ${
         batchMode && selected
           ? 'border-blue-500 ring-2 ring-blue-500/30'
           : 'border-gray-200 dark:border-gray-800 hover:shadow-md'
