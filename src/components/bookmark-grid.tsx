@@ -10,10 +10,9 @@ interface Props {
   selectedIds: Set<number>
   onToggleSelect: (id: number) => void
   folderNameMap: Record<number, string>
-  selectedFolderId: number | null
 }
 
-export function BookmarkGrid({ bookmarks, onDelete, batchMode, selectedIds, onToggleSelect, folderNameMap, selectedFolderId }: Props) {
+export function BookmarkGrid({ bookmarks, onDelete, batchMode, selectedIds, onToggleSelect, folderNameMap }: Props) {
   if (bookmarks.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
@@ -32,7 +31,7 @@ export function BookmarkGrid({ bookmarks, onDelete, batchMode, selectedIds, onTo
           batchMode={batchMode}
           selected={selectedIds.has(b.id)}
           onToggleSelect={onToggleSelect}
-          folderName={selectedFolderId === null && b.folderId != null ? (folderNameMap[b.folderId] ?? null) : null}
+          folderName={b.folderId != null ? (folderNameMap[b.folderId] ?? null) : null}
         />
       ))}
     </div>

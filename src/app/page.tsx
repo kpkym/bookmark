@@ -187,7 +187,6 @@ export default function Home() {
               selectedIds={selectedIds}
               onToggleSelect={toggleSelection}
               folderNameMap={folderNameMap}
-              selectedFolderId={selectedFolderId}
             />
           </div>
         </main>

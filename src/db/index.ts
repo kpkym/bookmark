@@ -8,7 +8,7 @@ const dbDir = path.join(process.cwd(), 'data')
 fs.mkdirSync(dbDir, { recursive: true })
 
 const sqlite = new Database(path.join(dbDir, 'bookmarks.db'))
-sqlite.pragma('journal_mode = WAL')
+sqlite.pragma('journal_mode = DELETE')
 sqlite.pragma('foreign_keys = ON')
 
 export const db = drizzle(sqlite, { schema })

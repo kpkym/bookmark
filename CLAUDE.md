@@ -40,7 +40,7 @@ src/
 │   └── sidebar.tsx             # Sidebar with folder tree + create folder
 ├── db/
 │   ├── schema.ts               # Drizzle schema (folders, bookmarks tables)
-│   └── index.ts                # DB connection (WAL mode, foreign keys ON)
+│   └── index.ts                # DB connection (DELETE mode, foreign keys ON)
 └── lib/
     └── screenshots.ts          # Screenshot save/delete/path utilities
 extension/                      # Chrome Extension (Manifest V3)
@@ -58,7 +58,7 @@ drizzle/                        # Generated migrations
 - **Chrome extension** captures visible tab screenshot and POSTs to configurable server URL
 - **CORS** enabled on all API routes for chrome-extension:// origin
 - **Self-referencing foreign key** in folders table requires `any` type cast (Drizzle limitation)
-- **Database** at `data/bookmarks.db` with WAL journal mode
+- **Database** at `data/bookmarks.db` with DELETE journal mode
 
 ## Conventions
 

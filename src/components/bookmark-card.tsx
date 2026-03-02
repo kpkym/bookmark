@@ -23,6 +23,11 @@ export function BookmarkCard({ bookmark, onDelete, batchMode, selected, onToggle
     data: { type: 'bookmark', bookmarkId: bookmark.id },
   })
   const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined
+  const hasDragged = useRef(false)
+  useEffect(() => {
+    if (isDragging)
+      hasDragged.current = true
+  }, [isDragging])
 
   useEffect(() => {
     if (!showMenu)
@@ -87,7 +92,17 @@ export function BookmarkCard({ bookmark, onDelete, batchMode, selected, onToggle
             </div>
           )
         : (
-            <a href={bookmark.url} target="_blank" rel="noopener noreferrer">
+            <a
+              href={bookmark.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                if (hasDragged.current) {
+                  e.preventDefault()
+                  hasDragged.current = false
+                }
+              }}
+            >
               {bookmark.screenshotPath
                 ? (
                     <img
