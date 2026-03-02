@@ -107,7 +107,22 @@ export default function Home() {
       return
 
     if (active.data.current?.type === 'bookmark') {
-      // Handled in Task 4
+      const bookmarkId = active.data.current.bookmarkId as number
+      let newFolderId: number | null
+      if (over.id === 'root') {
+        newFolderId = null
+      }
+      else {
+        newFolderId = Number(String(over.id).replace('drop-', ''))
+      }
+      setBookmarks(prev =>
+        prev.map(b => b.id === bookmarkId ? { ...b, folderId: newFolderId } : b),
+      )
+      await fetch(`/api/bookmarks/${bookmarkId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderId: newFolderId }),
+      })
       return
     }
 
