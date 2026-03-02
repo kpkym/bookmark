@@ -1,11 +1,11 @@
 'use client'
 
 import type { DragEndEvent } from '@dnd-kit/core'
-import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core'
+import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { useEffect, useState } from 'react'
 
-interface Folder {
+export interface Folder {
   id: number
   name: string
   parentId: number | null
@@ -24,7 +24,7 @@ interface Props {
   onMutate: () => void
 }
 
-function isDescendantOrSelf(folders: Folder[], ancestorId: number, checkId: number): boolean {
+export function isDescendantOrSelf(folders: Folder[], ancestorId: number, checkId: number): boolean {
   if (ancestorId === checkId)
     return true
   const children = folders.filter(f => f.parentId === ancestorId)
@@ -35,7 +35,10 @@ function DraggableFolder({
   folder,
   depth,
   isSelected,
+  hasChildren,
+  isExpanded,
   onSelect,
+  onToggleExpand,
   onContextMenu,
   editingId,
   editingName,
@@ -51,7 +54,10 @@ function DraggableFolder({
   folder: Folder
   depth: number
   isSelected: boolean
+  hasChildren: boolean
+  isExpanded: boolean
   onSelect: () => void
+  onToggleExpand: () => void
   onContextMenu: (e: React.MouseEvent) => void
   editingId: number | null
   editingName: string
@@ -114,11 +120,24 @@ function DraggableFolder({
               {...listeners}
               onClick={onSelect}
               onContextMenu={onContextMenu}
-              className={`w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${
+              className={`w-full text-left py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-1 pr-3 ${
                 isSelected ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
               }`}
-              style={{ paddingLeft: `${depth * 16 + 12}px` }}
+              style={{ paddingLeft: `${depth * 16 + 8}px` }}
             >
+              <span
+                className={`flex-shrink-0 flex items-center justify-center w-4 h-4 text-gray-400 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''} ${!hasChildren ? 'invisible' : ''}`}
+                onClick={hasChildren
+                  ? (e) => {
+                      e.stopPropagation()
+                      onToggleExpand()
+                    }
+                  : undefined}
+              >
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-3 h-3">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </span>
               {folder.name}
             </button>
           )}
@@ -174,6 +193,19 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
   const [editingName, setEditingName] = useState('')
   const [creatingUnder, setCreatingUnder] = useState<number | null>(null)
   const [creatingName, setCreatingName] = useState('')
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
+
+  function toggleExpand(id: number) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id))
+        next.delete(id)
+      else
+        next.add(id)
+      return next
+    })
+  }
 
   function fetchFolders() {
     fetch('/api/folders')
@@ -237,6 +269,8 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
   function renderFolder(folder: Folder, depth: number = 0) {
     const children = folders.filter(f => f.parentId === folder.id)
     const isSelected = selectedFolderId === folder.id
+    const hasChildren = children.length > 0
+    const isExpanded = expandedIds.has(folder.id)
 
     return (
       <DraggableFolder
@@ -244,7 +278,14 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
         folder={folder}
         depth={depth}
         isSelected={isSelected}
-        onSelect={() => onSelectFolder(folder.id)}
+        hasChildren={hasChildren}
+        isExpanded={isExpanded}
+        onSelect={() => {
+          if (!isSelected)
+            setExpandedIds(prev => new Set(prev).add(folder.id))
+          onSelectFolder(isSelected ? null : folder.id)
+        }}
+        onToggleExpand={() => toggleExpand(folder.id)}
         onContextMenu={(e) => {
           e.preventDefault()
           setContextMenu({ x: e.clientX, y: e.clientY, folder })
@@ -259,14 +300,14 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
         setCreatingName={setCreatingName}
         setCreatingUnder={setCreatingUnder}
       >
-        {children.map(c => renderFolder(c, depth + 1))}
+        {isExpanded && children.map(c => renderFolder(c, depth + 1))}
       </DraggableFolder>
     )
   }
 
   return (
     <>
-      <DndContext onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <nav className="space-y-0.5">
           <AllBookmarksDropTarget
             isSelected={selectedFolderId === null}
