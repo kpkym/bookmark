@@ -18,6 +18,8 @@ export default function Home() {
   const [folders, setFolders] = useState<Folder[]>([])
   const [batchMode, setBatchMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [sidebarMode, setSidebarMode] = useState<'folders' | 'domains'>('folders')
+  const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
 
   const fetchFolders = useCallback(() => {
     fetch('/api/folders').then(r => r.json()).then(setFolders)
@@ -45,6 +47,30 @@ export default function Home() {
     fetchBookmarks()
   }, [fetchBookmarks])
 
+  function handleSetSidebarMode(mode: 'folders' | 'domains') {
+    setSidebarMode(mode)
+    if (mode === 'folders') {
+      setSelectedDomain(null)
+    }
+    else {
+      setSelectedFolderId(null)
+    }
+  }
+
+  const filteredBookmarks = useMemo(
+    () => selectedDomain
+      ? bookmarks.filter((b) => {
+          try {
+            return new URL(b.url).hostname === selectedDomain
+          }
+          catch {
+            return false
+          }
+        })
+      : bookmarks,
+    [bookmarks, selectedDomain],
+  )
+
   function toggleBatchMode() {
     if (batchMode) {
       setSelectedIds(new Set())
@@ -63,7 +89,7 @@ export default function Home() {
   }
 
   function selectAll() {
-    setSelectedIds(new Set(bookmarks.map(b => b.id)))
+    setSelectedIds(new Set(filteredBookmarks.map(b => b.id)))
   }
 
   function deselectAll() {
@@ -171,10 +197,15 @@ export default function Home() {
         }}
       >
         <Sidebar
+          sidebarMode={sidebarMode}
+          onSetSidebarMode={handleSetSidebarMode}
           selectedFolderId={selectedFolderId}
           onSelectFolder={setSelectedFolderId}
           folders={folders}
           fetchFolders={fetchFolders}
+          bookmarks={bookmarks}
+          selectedDomain={selectedDomain}
+          onSelectDomain={setSelectedDomain}
         />
         <main className="flex-1 flex flex-col overflow-hidden">
           <header className="border-b border-gray-200 dark:border-gray-800 p-4 flex items-center gap-4">
@@ -194,7 +225,7 @@ export default function Home() {
           </header>
           <div className="flex-1 overflow-y-auto">
             <BookmarkGrid
-              bookmarks={bookmarks}
+              bookmarks={filteredBookmarks}
               onDelete={handleDelete}
               batchMode={batchMode}
               selectedIds={selectedIds}
@@ -206,7 +237,7 @@ export default function Home() {
         {batchMode && (
           <BatchToolbar
             selectedCount={selectedIds.size}
-            totalCount={bookmarks.length}
+            totalCount={filteredBookmarks.length}
             onSelectAll={selectAll}
             onDeselectAll={deselectAll}
             onDelete={batchDelete}
