@@ -40,16 +40,19 @@ export async function DELETE(
   const { id } = await params
   const folderId = Number(id)
 
-  // Move bookmarks in this folder to root
+  const [folder] = await db.select().from(folders).where(eq(folders.id, folderId))
+  if (!folder)
+    return new Response('folder not found', { status: 404 })
+
+  // Delete bookmarks in this folder
   await db
-    .update(bookmarks)
-    .set({ folderId: null })
+    .delete(bookmarks)
     .where(eq(bookmarks.folderId, folderId))
 
-  // Move child folders to root
+  // Move child folders to this folder's parent
   await db
     .update(folders)
-    .set({ parentId: null })
+    .set({ parentId: folder.parentId })
     .where(eq(folders.parentId, folderId))
 
   await db.delete(folders).where(eq(folders.id, folderId))

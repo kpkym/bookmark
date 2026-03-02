@@ -288,8 +288,16 @@ export function FolderTree({ folders, fetchFolders, selectedFolderId, onSelectFo
             onClick={async () => {
               const folder = contextMenu.folder
               setContextMenu(null)
+              const res = await fetch(`/api/bookmarks?folderIds=${folder.id}`)
+              const bms = await res.json()
+              const count = bms.length
+              const parentFolder = folder.parentId != null ? folders.find(f => f.id === folder.parentId) : null
+              const parentLabel = parentFolder ? `"${parentFolder.name}"` : 'root'
+              const msg = count > 0
+                ? `Delete "${folder.name}"? This will permanently delete ${count} bookmark${count > 1 ? 's' : ''} inside it. Subfolders will move to ${parentLabel}.`
+                : `Delete "${folder.name}"? Subfolders will move to ${parentLabel}.`
               // eslint-disable-next-line no-alert
-              if (!window.confirm(`Delete "${folder.name}"? Bookmarks and subfolders will move to root.`))
+              if (!window.confirm(msg))
                 return
               await fetch(`/api/folders/${folder.id}`, { method: 'DELETE' })
               fetchFolders()
