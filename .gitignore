@@ -45,3 +45,6 @@ data/
 
 # claude
 .claude/settings.local.json
+
+# worktrees
+.worktrees/
