@@ -26,6 +26,8 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editingName, setEditingName] = useState('')
+  const [creatingUnder, setCreatingUnder] = useState<number | null>(null)
+  const [creatingName, setCreatingName] = useState('')
 
   function fetchFolders() {
     fetch('/api/folders')
@@ -100,6 +102,31 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
             </button>
           )}
         {children.map(c => renderFolder(c, depth + 1))}
+        {creatingUnder === folder.id && (
+          <input
+            autoFocus
+            placeholder="Subfolder name..."
+            value={creatingName}
+            onChange={e => setCreatingName(e.target.value)}
+            onKeyDown={async (e) => {
+              if (e.key === 'Enter' && creatingName.trim()) {
+                await fetch('/api/folders', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name: creatingName.trim(), parentId: folder.id }),
+                })
+                setCreatingUnder(null)
+                fetchFolders()
+              }
+              if (e.key === 'Escape') {
+                setCreatingUnder(null)
+              }
+            }}
+            onBlur={() => setCreatingUnder(null)}
+            className="w-full px-3 py-1 text-sm rounded border border-blue-400 focus:outline-none dark:bg-gray-900"
+            style={{ paddingLeft: `${(depth + 1) * 16 + 12}px` }}
+          />
+        )}
       </div>
     )
   }
@@ -136,7 +163,8 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
           <button
             className="w-full text-left px-4 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
             onClick={() => {
-              // new subfolder — Task 6
+              setCreatingUnder(contextMenu.folder.id)
+              setCreatingName('')
               setContextMenu(null)
             }}
           >
