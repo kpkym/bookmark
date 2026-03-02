@@ -14,6 +14,17 @@ interface Props {
   folderName: string | null
 }
 
+function formatDate(date: string) {
+  const d = new Date(date)
+  const yyyy = d.getFullYear()
+  const MM = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  const HH = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  const ss = String(d.getSeconds()).padStart(2, '0')
+  return `${yyyy}-${MM}-${dd} ${HH}:${mm}:${ss}`
+}
+
 export function BookmarkCard({ bookmark, onDelete, batchMode, selected, onToggleSelect, folderName }: Props) {
   const [showMenu, setShowMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -113,16 +124,12 @@ export function BookmarkCard({ bookmark, onDelete, batchMode, selected, onToggle
       <div className="p-3">
         <h3 className="font-medium text-sm truncate">{bookmark.title}</h3>
         <p className="text-xs text-gray-500 truncate">{bookmark.url}</p>
-        {folderName && (
-          <p className="text-xs text-gray-400 mt-0.5 truncate">
-            📁
-            {folderName}
-          </p>
-        )}
+        <div className="flex justify-between items-center mt-0.5 text-xs text-gray-400">
+          <span className="truncate">{folderName ? `📁${folderName}` : ''}</span>
+          <span className="shrink-0 ml-2">{formatDate(bookmark.updatedAt)}</span>
+        </div>
         {bookmark.description && (
-          <p className="text-xs text-gray-400 mt-1 line-clamp-2">
-            {bookmark.description}
-          </p>
+          <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{bookmark.description}</p>
         )}
       </div>
       {!batchMode && (

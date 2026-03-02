@@ -6,4 +6,5 @@ export interface Bookmark {
   screenshotPath: string | null
   folderId: number | null
   createdAt: string
+  updatedAt: string
 }
