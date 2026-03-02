@@ -137,7 +137,9 @@ export default function Home() {
 
   async function handleDragEnd(event: DragEndEvent) {
     justDragged.current = true
-    requestAnimationFrame(() => { justDragged.current = false })
+    requestAnimationFrame(() => {
+      justDragged.current = false
+    })
     const { active, over } = event
     if (!over)
       return
