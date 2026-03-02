@@ -1,6 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 
 interface Folder {
   id: number
@@ -19,6 +22,146 @@ interface Props {
   onSelectFolder: (id: number | null) => void
   refreshKey: number
   onMutate: () => void
+}
+
+function isDescendantOrSelf(folders: Folder[], ancestorId: number, checkId: number): boolean {
+  if (ancestorId === checkId) return true
+  const children = folders.filter(f => f.parentId === ancestorId)
+  return children.some(c => isDescendantOrSelf(folders, c.id, checkId))
+}
+
+function DraggableFolder({
+  folder,
+  depth,
+  isSelected,
+  onSelect,
+  onContextMenu,
+  editingId,
+  editingName,
+  setEditingName,
+  setEditingId,
+  fetchFolders,
+  creatingUnder,
+  creatingName,
+  setCreatingName,
+  setCreatingUnder,
+  children,
+}: {
+  folder: Folder
+  depth: number
+  isSelected: boolean
+  onSelect: () => void
+  onContextMenu: (e: React.MouseEvent) => void
+  editingId: number | null
+  editingName: string
+  setEditingName: (v: string) => void
+  setEditingId: (id: number | null) => void
+  fetchFolders: () => void
+  creatingUnder: number | null
+  creatingName: string
+  setCreatingName: (v: string) => void
+  setCreatingUnder: (id: number | null) => void
+  children: React.ReactNode
+}) {
+  const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({
+    id: folder.id,
+  })
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: `drop-${folder.id}`,
+  })
+
+  const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined
+
+  function combinedRef(el: HTMLDivElement | null) {
+    setDragRef(el)
+    setDropRef(el)
+  }
+
+  return (
+    <div
+      ref={combinedRef}
+      style={style}
+      className={`${isDragging ? 'opacity-50' : ''} ${isOver ? 'ring-1 ring-blue-400 rounded' : ''}`}
+    >
+      {editingId === folder.id
+        ? (
+          <input
+            autoFocus
+            value={editingName}
+            onChange={e => setEditingName(e.target.value)}
+            onKeyDown={async (e) => {
+              if (e.key === 'Enter') {
+                await fetch(`/api/folders/${folder.id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name: editingName.trim() }),
+                })
+                setEditingId(null)
+                fetchFolders()
+              }
+              if (e.key === 'Escape') setEditingId(null)
+            }}
+            onBlur={() => setEditingId(null)}
+            className="w-full px-3 py-1 text-sm rounded border border-blue-400 focus:outline-none dark:bg-gray-900"
+            style={{ paddingLeft: `${depth * 16 + 12}px` }}
+          />
+        )
+        : (
+          <button
+            {...attributes}
+            {...listeners}
+            onClick={onSelect}
+            onContextMenu={onContextMenu}
+            className={`w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${
+              isSelected ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
+            }`}
+            style={{ paddingLeft: `${depth * 16 + 12}px` }}
+          >
+            {folder.name}
+          </button>
+        )}
+      {children}
+      {creatingUnder === folder.id && (
+        <input
+          autoFocus
+          placeholder="Subfolder name..."
+          value={creatingName}
+          onChange={e => setCreatingName(e.target.value)}
+          onKeyDown={async (e) => {
+            if (e.key === 'Enter' && creatingName.trim()) {
+              await fetch('/api/folders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: creatingName.trim(), parentId: folder.id }),
+              })
+              setCreatingUnder(null)
+              fetchFolders()
+            }
+            if (e.key === 'Escape') setCreatingUnder(null)
+          }}
+          onBlur={() => setCreatingUnder(null)}
+          className="w-full px-3 py-1 text-sm rounded border border-blue-400 focus:outline-none dark:bg-gray-900"
+          style={{ paddingLeft: `${(depth + 1) * 16 + 12}px` }}
+        />
+      )}
+    </div>
+  )
+}
+
+function AllBookmarksDropTarget({ isSelected, onSelect }: { isSelected: boolean, onSelect: () => void }) {
+  const { setNodeRef, isOver } = useDroppable({ id: 'root' })
+  return (
+    <div ref={setNodeRef} className={isOver ? 'ring-1 ring-blue-400 rounded' : ''}>
+      <button
+        onClick={onSelect}
+        className={`w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${
+          isSelected ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
+        }`}
+      >
+        All Bookmarks
+      </button>
+    </div>
+  )
 }
 
 export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMutate: _onMutate }: Props) {
@@ -53,6 +196,36 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
     }
   }, [])
 
+  async function handleDragEnd(event: DragEndEvent) {
+    const draggedId = Number(event.active.id)
+    const overId = event.over?.id
+
+    if (!overId) return
+
+    let newParentId: number | null
+
+    if (overId === 'root') {
+      newParentId = null
+    }
+    else {
+      newParentId = Number(String(overId).replace('drop-', ''))
+    }
+
+    // No-op if dropped on self or descendant
+    if (newParentId !== null && isDescendantOrSelf(folders, draggedId, newParentId)) return
+
+    // No-op if already in that parent
+    const dragged = folders.find(f => f.id === draggedId)
+    if (dragged?.parentId === newParentId) return
+
+    await fetch(`/api/folders/${draggedId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ parentId: newParentId }),
+    })
+    fetchFolders()
+  }
+
   const rootFolders = folders.filter(f => f.parentId === null)
 
   function renderFolder(folder: Folder, depth: number = 0) {
@@ -60,90 +233,42 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
     const isSelected = selectedFolderId === folder.id
 
     return (
-      <div key={folder.id}>
-        {editingId === folder.id
-          ? (
-            <input
-              autoFocus
-              value={editingName}
-              onChange={e => setEditingName(e.target.value)}
-              onKeyDown={async (e) => {
-                if (e.key === 'Enter') {
-                  await fetch(`/api/folders/${folder.id}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: editingName.trim() }),
-                  })
-                  setEditingId(null)
-                  fetchFolders()
-                }
-                if (e.key === 'Escape') {
-                  setEditingId(null)
-                }
-              }}
-              onBlur={() => setEditingId(null)}
-              className="w-full px-3 py-1 text-sm rounded border border-blue-400 focus:outline-none dark:bg-gray-900"
-              style={{ paddingLeft: `${depth * 16 + 12}px` }}
-            />
-          )
-          : (
-            <button
-              onClick={() => onSelectFolder(folder.id)}
-              onContextMenu={(e) => {
-                e.preventDefault()
-                setContextMenu({ x: e.clientX, y: e.clientY, folder })
-              }}
-              className={`w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                isSelected ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
-              }`}
-              style={{ paddingLeft: `${depth * 16 + 12}px` }}
-            >
-              {folder.name}
-            </button>
-          )}
+      <DraggableFolder
+        key={folder.id}
+        folder={folder}
+        depth={depth}
+        isSelected={isSelected}
+        onSelect={() => onSelectFolder(folder.id)}
+        onContextMenu={(e) => {
+          e.preventDefault()
+          setContextMenu({ x: e.clientX, y: e.clientY, folder })
+        }}
+        editingId={editingId}
+        editingName={editingName}
+        setEditingName={setEditingName}
+        setEditingId={setEditingId}
+        fetchFolders={fetchFolders}
+        creatingUnder={creatingUnder}
+        creatingName={creatingName}
+        setCreatingName={setCreatingName}
+        setCreatingUnder={setCreatingUnder}
+      >
         {children.map(c => renderFolder(c, depth + 1))}
-        {creatingUnder === folder.id && (
-          <input
-            autoFocus
-            placeholder="Subfolder name..."
-            value={creatingName}
-            onChange={e => setCreatingName(e.target.value)}
-            onKeyDown={async (e) => {
-              if (e.key === 'Enter' && creatingName.trim()) {
-                await fetch('/api/folders', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ name: creatingName.trim(), parentId: folder.id }),
-                })
-                setCreatingUnder(null)
-                fetchFolders()
-              }
-              if (e.key === 'Escape') {
-                setCreatingUnder(null)
-              }
-            }}
-            onBlur={() => setCreatingUnder(null)}
-            className="w-full px-3 py-1 text-sm rounded border border-blue-400 focus:outline-none dark:bg-gray-900"
-            style={{ paddingLeft: `${(depth + 1) * 16 + 12}px` }}
-          />
-        )}
-      </div>
+      </DraggableFolder>
     )
   }
 
   return (
     <>
-      <nav className="space-y-0.5">
-        <button
-          onClick={() => onSelectFolder(null)}
-          className={`w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${
-            selectedFolderId === null ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
-          }`}
-        >
-          All Bookmarks
-        </button>
-        {rootFolders.map(f => renderFolder(f))}
-      </nav>
+      <DndContext onDragEnd={handleDragEnd}>
+        <nav className="space-y-0.5">
+          <AllBookmarksDropTarget
+            isSelected={selectedFolderId === null}
+            onSelect={() => onSelectFolder(null)}
+          />
+          {rootFolders.map(f => renderFolder(f))}
+        </nav>
+      </DndContext>
       {contextMenu && (
         <div
           className="fixed z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded shadow-lg py-1 min-w-36"
