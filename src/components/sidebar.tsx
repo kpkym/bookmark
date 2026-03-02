@@ -1,20 +1,18 @@
 'use client'
 
+import type { Folder } from '@/lib/folder-utils'
 import { useState } from 'react'
 import { FolderTree } from './folder-tree'
 
 interface Props {
   selectedFolderId: number | null
   onSelectFolder: (id: number | null) => void
+  folders: Folder[]
+  fetchFolders: () => void
 }
 
-export function Sidebar({ selectedFolderId, onSelectFolder }: Props) {
+export function Sidebar({ selectedFolderId, onSelectFolder, folders, fetchFolders }: Props) {
   const [newFolderName, setNewFolderName] = useState('')
-  const [refreshKey, setRefreshKey] = useState(0)
-
-  function refresh() {
-    setRefreshKey(k => k + 1)
-  }
 
   async function createFolder() {
     if (!newFolderName.trim())
@@ -25,7 +23,7 @@ export function Sidebar({ selectedFolderId, onSelectFolder }: Props) {
       body: JSON.stringify({ name: newFolderName.trim() }),
     })
     setNewFolderName('')
-    refresh()
+    fetchFolders()
   }
 
   return (
@@ -34,10 +32,11 @@ export function Sidebar({ selectedFolderId, onSelectFolder }: Props) {
         Folders
       </h2>
       <FolderTree
+        folders={folders}
+        fetchFolders={fetchFolders}
         selectedFolderId={selectedFolderId}
         onSelectFolder={onSelectFolder}
-        refreshKey={refreshKey}
-        onMutate={refresh}
+        onMutate={fetchFolders}
       />
       <div className="mt-auto">
         <input

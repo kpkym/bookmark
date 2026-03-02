@@ -1,15 +1,13 @@
 'use client'
 
 import type { DragEndEvent } from '@dnd-kit/core'
+import type { Folder } from '@/lib/folder-utils'
 import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { useEffect, useState } from 'react'
+import { isDescendantOrSelf } from '@/lib/folder-utils'
 
-export interface Folder {
-  id: number
-  name: string
-  parentId: number | null
-}
+export type { Folder }
 
 interface ContextMenu {
   x: number
@@ -18,17 +16,11 @@ interface ContextMenu {
 }
 
 interface Props {
+  folders: Folder[]
+  fetchFolders: () => void
   selectedFolderId: number | null
   onSelectFolder: (id: number | null) => void
-  refreshKey: number
   onMutate: () => void
-}
-
-export function isDescendantOrSelf(folders: Folder[], ancestorId: number, checkId: number): boolean {
-  if (ancestorId === checkId)
-    return true
-  const children = folders.filter(f => f.parentId === ancestorId)
-  return children.some(c => isDescendantOrSelf(folders, c.id, checkId))
 }
 
 function DraggableFolder({
@@ -186,15 +178,13 @@ function AllBookmarksDropTarget({ isSelected, onSelect }: { isSelected: boolean,
   )
 }
 
-export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMutate: _onMutate }: Props) {
-  const [folders, setFolders] = useState<Folder[]>([])
+export function FolderTree({ folders, fetchFolders, selectedFolderId, onSelectFolder, onMutate: _onMutate }: Props) {
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editingName, setEditingName] = useState('')
   const [creatingUnder, setCreatingUnder] = useState<number | null>(null)
   const [creatingName, setCreatingName] = useState('')
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   function toggleExpand(id: number) {
     setExpandedIds((prev) => {
@@ -206,16 +196,6 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
       return next
     })
   }
-
-  function fetchFolders() {
-    fetch('/api/folders')
-      .then(r => r.json())
-      .then(setFolders)
-  }
-
-  useEffect(() => {
-    fetchFolders()
-  }, [refreshKey])
 
   useEffect(() => {
     function close(e: MouseEvent | KeyboardEvent) {

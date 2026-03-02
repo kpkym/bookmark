@@ -1,5 +1,6 @@
 'use client'
 
+import type { Folder } from '@/lib/folder-utils'
 import type { Bookmark } from '@/types/bookmark'
 import { useCallback, useEffect, useState } from 'react'
 import { BatchToolbar } from '@/components/batch-toolbar'
@@ -11,8 +12,17 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null)
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([])
+  const [folders, setFolders] = useState<Folder[]>([])
   const [batchMode, setBatchMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+
+  const fetchFolders = useCallback(() => {
+    fetch('/api/folders').then(r => r.json()).then(setFolders)
+  }, [])
+
+  useEffect(() => {
+    fetchFolders()
+  }, [fetchFolders])
 
   const fetchBookmarks = useCallback(() => {
     const params = new URLSearchParams()
@@ -91,6 +101,8 @@ export default function Home() {
       <Sidebar
         selectedFolderId={selectedFolderId}
         onSelectFolder={setSelectedFolderId}
+        folders={folders}
+        fetchFolders={fetchFolders}
       />
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="border-b border-gray-200 dark:border-gray-800 p-4 flex items-center gap-4">
