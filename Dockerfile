@@ -1,13 +1,12 @@
-FROM oven/bun:1 AS base
+FROM node:20-slim AS base
 WORKDIR /app
 
 FROM base AS deps
 RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 COPY package.json bun.lock* ./
-RUN bun install --frozen-lockfile
+RUN npm install
 
-FROM node:20-slim AS builder
-WORKDIR /app
+FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx next build
@@ -26,4 +25,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["bun", "server.js"]
+CMD ["node", "server.js"]
