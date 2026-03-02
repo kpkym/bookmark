@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
+import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
+import { useEffect, useState } from 'react'
 
 interface Folder {
   id: number
@@ -25,7 +25,8 @@ interface Props {
 }
 
 function isDescendantOrSelf(folders: Folder[], ancestorId: number, checkId: number): boolean {
-  if (ancestorId === checkId) return true
+  if (ancestorId === checkId)
+    return true
   const children = folders.filter(f => f.parentId === ancestorId)
   return children.some(c => isDescendantOrSelf(folders, c.id, checkId))
 }
@@ -85,41 +86,42 @@ function DraggableFolder({
     >
       {editingId === folder.id
         ? (
-          <input
-            autoFocus
-            value={editingName}
-            onChange={e => setEditingName(e.target.value)}
-            onKeyDown={async (e) => {
-              if (e.key === 'Enter') {
-                await fetch(`/api/folders/${folder.id}`, {
-                  method: 'PATCH',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ name: editingName.trim() }),
-                })
-                setEditingId(null)
-                fetchFolders()
-              }
-              if (e.key === 'Escape') setEditingId(null)
-            }}
-            onBlur={() => setEditingId(null)}
-            className="w-full px-3 py-1 text-sm rounded border border-blue-400 focus:outline-none dark:bg-gray-900"
-            style={{ paddingLeft: `${depth * 16 + 12}px` }}
-          />
-        )
+            <input
+              autoFocus
+              value={editingName}
+              onChange={e => setEditingName(e.target.value)}
+              onKeyDown={async (e) => {
+                if (e.key === 'Enter') {
+                  await fetch(`/api/folders/${folder.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: editingName.trim() }),
+                  })
+                  setEditingId(null)
+                  fetchFolders()
+                }
+                if (e.key === 'Escape')
+                  setEditingId(null)
+              }}
+              onBlur={() => setEditingId(null)}
+              className="w-full px-3 py-1 text-sm rounded border border-blue-400 focus:outline-none dark:bg-gray-900"
+              style={{ paddingLeft: `${depth * 16 + 12}px` }}
+            />
+          )
         : (
-          <button
-            {...attributes}
-            {...listeners}
-            onClick={onSelect}
-            onContextMenu={onContextMenu}
-            className={`w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${
-              isSelected ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
-            }`}
-            style={{ paddingLeft: `${depth * 16 + 12}px` }}
-          >
-            {folder.name}
-          </button>
-        )}
+            <button
+              {...attributes}
+              {...listeners}
+              onClick={onSelect}
+              onContextMenu={onContextMenu}
+              className={`w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                isSelected ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
+              }`}
+              style={{ paddingLeft: `${depth * 16 + 12}px` }}
+            >
+              {folder.name}
+            </button>
+          )}
       {children}
       {creatingUnder === folder.id && (
         <input
@@ -137,7 +139,8 @@ function DraggableFolder({
               setCreatingUnder(null)
               fetchFolders()
             }
-            if (e.key === 'Escape') setCreatingUnder(null)
+            if (e.key === 'Escape')
+              setCreatingUnder(null)
           }}
           onBlur={() => setCreatingUnder(null)}
           className="w-full px-3 py-1 text-sm rounded border border-blue-400 focus:outline-none dark:bg-gray-900"
@@ -200,7 +203,8 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
     const draggedId = Number(event.active.id)
     const overId = event.over?.id
 
-    if (!overId) return
+    if (!overId)
+      return
 
     let newParentId: number | null
 
@@ -212,11 +216,13 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
     }
 
     // No-op if dropped on self or descendant
-    if (newParentId !== null && isDescendantOrSelf(folders, draggedId, newParentId)) return
+    if (newParentId !== null && isDescendantOrSelf(folders, draggedId, newParentId))
+      return
 
     // No-op if already in that parent
     const dragged = folders.find(f => f.id === draggedId)
-    if (dragged?.parentId === newParentId) return
+    if (dragged?.parentId === newParentId)
+      return
 
     await fetch(`/api/folders/${draggedId}`, {
       method: 'PATCH',
@@ -300,6 +306,7 @@ export function FolderTree({ selectedFolderId, onSelectFolder, refreshKey, onMut
             onClick={async () => {
               const folder = contextMenu.folder
               setContextMenu(null)
+              // eslint-disable-next-line no-alert
               if (!window.confirm(`Delete "${folder.name}"? Bookmarks and subfolders will move to root.`))
                 return
               await fetch(`/api/folders/${folder.id}`, { method: 'DELETE' })
