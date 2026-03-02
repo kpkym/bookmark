@@ -11,9 +11,10 @@ interface Props {
   batchMode: boolean
   selected: boolean
   onToggleSelect: (id: number) => void
+  folderName: string | null
 }
 
-export function BookmarkCard({ bookmark, onDelete, batchMode, selected, onToggleSelect }: Props) {
+export function BookmarkCard({ bookmark, onDelete, batchMode, selected, onToggleSelect, folderName }: Props) {
   const [showMenu, setShowMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -106,6 +107,12 @@ export function BookmarkCard({ bookmark, onDelete, batchMode, selected, onToggle
       <div className="p-3">
         <h3 className="font-medium text-sm truncate">{bookmark.title}</h3>
         <p className="text-xs text-gray-500 truncate">{bookmark.url}</p>
+        {folderName && (
+          <p className="text-xs text-gray-400 mt-0.5 truncate">
+            📁
+            {folderName}
+          </p>
+        )}
         {bookmark.description && (
           <p className="text-xs text-gray-400 mt-1 line-clamp-2">
             {bookmark.description}

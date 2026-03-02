@@ -4,7 +4,7 @@ import type { DragEndEvent } from '@dnd-kit/core'
 import type { Folder } from '@/lib/folder-utils'
 import type { Bookmark } from '@/types/bookmark'
 import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BatchToolbar } from '@/components/batch-toolbar'
 import { BookmarkGrid } from '@/components/bookmark-grid'
 import { SearchBar } from '@/components/search-bar'
@@ -99,6 +99,11 @@ export default function Home() {
     setBookmarks(prev => prev.filter(b => b.id !== id))
   }
 
+  const folderNameMap = useMemo(
+    () => Object.fromEntries(folders.map(f => [f.id, f.name])),
+    [folders],
+  )
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   async function handleDragEnd(event: DragEndEvent) {
@@ -181,6 +186,8 @@ export default function Home() {
               batchMode={batchMode}
               selectedIds={selectedIds}
               onToggleSelect={toggleSelection}
+              folderNameMap={folderNameMap}
+              selectedFolderId={selectedFolderId}
             />
           </div>
         </main>
