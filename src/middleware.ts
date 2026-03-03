@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 
 function safeCompare(a: string, b: string): boolean {
   const len = Math.max(a.length, b.length)
@@ -11,7 +12,8 @@ function safeCompare(a: string, b: string): boolean {
 
 export function middleware(req: NextRequest) {
   const apiKey = process.env.API_KEY
-  if (!apiKey) return NextResponse.next()
+  if (!apiKey)
+    return NextResponse.next()
 
   const header = req.headers.get('x-api-key') ?? ''
   if (!safeCompare(header, apiKey)) {
