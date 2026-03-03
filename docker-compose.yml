@@ -6,3 +6,5 @@ services:
     volumes:
       - ./data:/app/data
     restart: unless-stopped
+    environment:
+      - API_KEY=${API_KEY:-}
