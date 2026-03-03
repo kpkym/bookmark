@@ -60,7 +60,7 @@ bunx drizzle-kit migrate
 
 ## Project Structure
 
-```
+```text
 src/
 ├── app/
 │   ├── layout.tsx
