@@ -11,8 +11,17 @@ function safeCompare(a: string, b: string): boolean {
 }
 
 export function middleware(req: NextRequest) {
+  if (req.method === 'OPTIONS')
+    return NextResponse.next()
+
   const apiKey = process.env.API_KEY
   if (!apiKey)
+    return NextResponse.next()
+
+  // Allow same-origin requests (web UI)
+  const origin = req.headers.get('origin')
+  const host = req.headers.get('host')
+  if (!origin || origin === `http://${host}` || origin === `https://${host}`)
     return NextResponse.next()
 
   const header = req.headers.get('x-api-key') ?? ''
