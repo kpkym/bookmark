@@ -18,7 +18,7 @@ export default function Home() {
   const [folders, setFolders] = useState<Folder[]>([])
   const [batchMode, setBatchMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
-  const [sidebarMode, setSidebarMode] = useState<'folders' | 'domains'>('folders')
+  const [sidebarMode, setSidebarMode] = useState<'folders' | 'domains'>('domains')
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
 
   const fetchFolders = useCallback(() => {
