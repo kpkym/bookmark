@@ -10,6 +10,7 @@ import { BookmarkGrid } from '@/components/bookmark-grid'
 import { SearchBar } from '@/components/search-bar'
 import { Sidebar } from '@/components/sidebar'
 import { getDescendantIds, isDescendantOrSelf } from '@/lib/folder-utils'
+import { extractDomain } from '@/lib/url'
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -64,14 +65,14 @@ export default function Home() {
       const domainCounts = new Map<string, number>()
       for (const b of bookmarks) {
         try {
-          const domain = new URL(b.url).hostname
+          const domain = extractDomain(b.url)
           domainCounts.set(domain, (domainCounts.get(domain) ?? 0) + 1)
         }
         catch {}
       }
       return bookmarks.filter((b) => {
         try {
-          return (domainCounts.get(new URL(b.url).hostname) ?? 0) < 3
+          return (domainCounts.get(extractDomain(b.url)) ?? 0) < 3
         }
         catch {
           return false
@@ -80,7 +81,7 @@ export default function Home() {
     }
     return bookmarks.filter((b) => {
       try {
-        return new URL(b.url).hostname === selectedDomain
+        return extractDomain(b.url) === selectedDomain
       }
       catch {
         return false

@@ -1,5 +1,7 @@
 'use client'
 
+import { extractDomain } from '@/lib/url'
+
 interface Props {
   bookmarks: { url: string }[]
   selectedDomain: string | null
@@ -10,7 +12,7 @@ export function DomainList({ bookmarks, selectedDomain, onSelectDomain }: Props)
   const domainCounts = new Map<string, number>()
   for (const b of bookmarks) {
     try {
-      const domain = new URL(b.url).hostname
+      const domain = extractDomain(b.url)
       domainCounts.set(domain, (domainCounts.get(domain) ?? 0) + 1)
     }
     catch {
