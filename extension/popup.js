@@ -7,8 +7,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   })
 
   // Load saved server URL
-  const stored = await chrome.storage.local.get('serverUrl')
+  const stored = await chrome.storage.local.get(['serverUrl', 'apiKey'])
   const serverUrl = stored.serverUrl || 'http://localhost:3136'
+  const apiKey = stored.apiKey || ''
 
   // Get current tab info
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
@@ -29,7 +30,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Load folders
   try {
-    const res = await fetch(`${serverUrl}/api/folders`)
+    const res = await fetch(`${serverUrl}/api/folders`, {
+      headers: apiKey ? { 'x-api-key': apiKey } : {},
+    })
     const folders = await res.json()
     const select = document.getElementById('folder')
     folders.forEach((f) => {
@@ -54,7 +57,7 @@ async function saveBookmark() {
   status.textContent = 'Saving...'
   status.className = ''
 
-  const { serverUrl = 'http://localhost:3136' } = await chrome.storage.local.get('serverUrl')
+  const { serverUrl = 'http://localhost:3136', apiKey = '' } = await chrome.storage.local.get(['serverUrl', 'apiKey'])
   const formData = new FormData()
   formData.append('url', document.getElementById('url').value)
   formData.append('title', document.getElementById('title').value)
@@ -72,6 +75,7 @@ async function saveBookmark() {
   try {
     const res = await fetch(`${serverUrl}/api/bookmarks`, {
       method: 'POST',
+      headers: apiKey ? { 'x-api-key': apiKey } : {},
       body: formData,
     })
 
