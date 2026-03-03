@@ -4,6 +4,10 @@
   "version": "1.0.0",
   "description": "Save bookmarks",
   "permissions": ["activeTab", "tabs", "storage"],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

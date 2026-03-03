@@ -1,15 +1,14 @@
 let screenshotDataUrl = null
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Open settings page
+  document.getElementById('open-settings').addEventListener('click', () => {
+    chrome.runtime.openOptionsPage()
+  })
+
   // Load saved server URL
   const stored = await chrome.storage.local.get('serverUrl')
-  const serverUrlInput = document.getElementById('serverUrl')
-  serverUrlInput.value = stored.serverUrl || 'http://localhost:3136'
-
-  // Save server URL on change
-  serverUrlInput.addEventListener('change', () => {
-    chrome.storage.local.set({ serverUrl: serverUrlInput.value })
-  })
+  const serverUrl = stored.serverUrl || 'http://localhost:3136'
 
   // Get current tab info
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
@@ -30,7 +29,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Load folders
   try {
-    const serverUrl = serverUrlInput.value
     const res = await fetch(`${serverUrl}/api/folders`)
     const folders = await res.json()
     const select = document.getElementById('folder')
@@ -56,7 +54,7 @@ async function saveBookmark() {
   status.textContent = 'Saving...'
   status.className = ''
 
-  const serverUrl = document.getElementById('serverUrl').value
+  const { serverUrl = 'http://localhost:3136' } = await chrome.storage.local.get('serverUrl')
   const formData = new FormData()
   formData.append('url', document.getElementById('url').value)
   formData.append('title', document.getElementById('title').value)

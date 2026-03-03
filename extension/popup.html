@@ -6,7 +6,10 @@
 </head>
 <body>
   <div class="container">
-    <h1>Save Bookmark</h1>
+    <div class="header">
+      <h1>Save Bookmark</h1>
+      <button id="open-settings" class="btn-icon" title="Settings">⚙</button>
+    </div>
     <div class="field">
       <label>Title</label>
       <input type="text" id="title">
@@ -27,10 +30,6 @@
     </div>
     <div id="preview">
       <img id="screenshot-preview" alt="Screenshot preview">
-    </div>
-    <div class="field">
-      <label>Server URL</label>
-      <input type="text" id="serverUrl" placeholder="http://localhost:3136">
     </div>
     <button id="save" class="btn-primary">Save Bookmark</button>
     <div id="status"></div>

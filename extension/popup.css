@@ -1,7 +1,10 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { width: 350px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 13px; }
 .container { padding: 16px; }
-h1 { font-size: 16px; margin-bottom: 12px; }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+h1 { font-size: 16px; }
+.btn-icon { background: none; border: none; font-size: 16px; cursor: pointer; padding: 2px 4px; color: #888; border-radius: 4px; }
+.btn-icon:hover { background: #f0f0f0; color: #333; }
 .field { margin-bottom: 10px; }
 label { display: block; font-size: 11px; color: #666; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
 input, textarea, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
