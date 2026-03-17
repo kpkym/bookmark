@@ -3,7 +3,8 @@
 import type { Folder } from '@/lib/folder-utils'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { getDescendantIds } from '@/lib/folder-utils'
 
 export type { Folder }
 
@@ -19,6 +20,7 @@ interface Props {
   selectedFolderId: number | null
   onSelectFolder: (id: number | null) => void
   onMutate: () => void
+  bookmarks: { folderId: number | null }[]
 }
 
 function DraggableFolder({
@@ -39,6 +41,7 @@ function DraggableFolder({
   creatingName,
   setCreatingName,
   setCreatingUnder,
+  bookmarkCount,
   children,
 }: {
   folder: Folder
@@ -58,6 +61,7 @@ function DraggableFolder({
   creatingName: string
   setCreatingName: (v: string) => void
   setCreatingUnder: (id: number | null) => void
+  bookmarkCount: number
   children: React.ReactNode
 }) {
   const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({
@@ -125,7 +129,8 @@ function DraggableFolder({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </span>
-                {folder.name}
+                <span className="truncate min-w-0">{folder.name}</span>
+                <span className="ml-auto shrink-0 text-xs text-gray-400">{bookmarkCount}</span>
               </button>
             )}
       </div>
@@ -158,23 +163,24 @@ function DraggableFolder({
   )
 }
 
-function AllBookmarksDropTarget({ isSelected, onSelect }: { isSelected: boolean, onSelect: () => void }) {
+function AllBookmarksDropTarget({ isSelected, onSelect, bookmarkCount }: { isSelected: boolean, onSelect: () => void, bookmarkCount: number }) {
   const { setNodeRef, isOver } = useDroppable({ id: 'root' })
   return (
     <div ref={setNodeRef} className={isOver ? 'ring-1 ring-blue-400 rounded' : ''}>
       <button
         onClick={onSelect}
-        className={`w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${
+        className={`w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 flex justify-between items-center gap-2 ${
           isSelected ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium' : ''
         }`}
       >
-        All Bookmarks
+        <span className="truncate min-w-0">All Bookmarks</span>
+        <span className="shrink-0 text-xs text-gray-400">{bookmarkCount}</span>
       </button>
     </div>
   )
 }
 
-export function FolderTree({ folders, fetchFolders, selectedFolderId, onSelectFolder, onMutate: _onMutate }: Props) {
+export function FolderTree({ folders, fetchFolders, selectedFolderId, onSelectFolder, onMutate: _onMutate, bookmarks }: Props) {
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editingName, setEditingName] = useState('')
@@ -206,6 +212,22 @@ export function FolderTree({ folders, fetchFolders, selectedFolderId, onSelectFo
       window.removeEventListener('keydown', close)
     }
   }, [])
+
+  const folderCounts = useMemo(() => {
+    const counts = new Map<number, number>()
+    for (const b of bookmarks) {
+      if (b.folderId !== null) {
+        counts.set(b.folderId, (counts.get(b.folderId) ?? 0) + 1)
+      }
+    }
+    // Sum descendants for each folder
+    const totalCounts = new Map<number, number>()
+    for (const folder of folders) {
+      const ids = getDescendantIds(folders, folder.id)
+      totalCounts.set(folder.id, ids.reduce((sum, id) => sum + (counts.get(id) ?? 0), 0))
+    }
+    return totalCounts
+  }, [bookmarks, folders])
 
   const rootFolders = folders.filter(f => f.parentId === null)
 
@@ -242,6 +264,7 @@ export function FolderTree({ folders, fetchFolders, selectedFolderId, onSelectFo
         creatingName={creatingName}
         setCreatingName={setCreatingName}
         setCreatingUnder={setCreatingUnder}
+        bookmarkCount={folderCounts.get(folder.id) ?? 0}
       >
         {isExpanded && children.map(c => renderFolder(c, depth + 1))}
       </DraggableFolder>
@@ -254,6 +277,7 @@ export function FolderTree({ folders, fetchFolders, selectedFolderId, onSelectFo
         <AllBookmarksDropTarget
           isSelected={selectedFolderId === null}
           onSelect={() => onSelectFolder(null)}
+          bookmarkCount={bookmarks.length}
         />
         {rootFolders.map(f => renderFolder(f))}
       </nav>

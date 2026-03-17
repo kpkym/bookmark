@@ -29,13 +29,14 @@ export function DomainList({ bookmarks, selectedDomain, onSelectDomain }: Props)
     <div className="flex-1 flex flex-col gap-0.5 min-h-0 overflow-hidden">
       <button
         onClick={() => onSelectDomain(null)}
-        className={`shrink-0 text-left px-2 py-1.5 rounded text-sm truncate ${
+        className={`shrink-0 text-left px-2 py-1.5 rounded text-sm truncate flex justify-between items-center gap-2 ${
           selectedDomain === null
             ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium'
             : 'hover:bg-gray-100 dark:hover:bg-gray-800'
         }`}
       >
-        All Domains
+        <span className="truncate min-w-0">All Domains</span>
+        <span className="shrink-0 text-xs text-gray-400">{bookmarks.length}</span>
       </button>
       <div className="flex flex-col gap-0.5 overflow-y-auto min-h-0 flex-1">
         {main.map(([domain, count]) => (

@@ -12,7 +12,8 @@ interface Props {
   onSelectFolder: (id: number | null) => void
   folders: Folder[]
   fetchFolders: () => void
-  bookmarks: { url: string }[]
+  bookmarks: { url: string, folderId: number | null }[]
+  allBookmarks: { url: string, folderId: number | null }[]
   selectedDomain: string | null
   onSelectDomain: (domain: string | null) => void
 }
@@ -25,6 +26,7 @@ export function Sidebar({
   folders,
   fetchFolders,
   bookmarks,
+  allBookmarks,
   selectedDomain,
   onSelectDomain,
 }: Props) {
@@ -75,6 +77,7 @@ export function Sidebar({
                 selectedFolderId={selectedFolderId}
                 onSelectFolder={onSelectFolder}
                 onMutate={fetchFolders}
+                bookmarks={allBookmarks}
               />
               <div className="mt-auto">
                 <input

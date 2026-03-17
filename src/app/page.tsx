@@ -16,6 +16,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null)
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([])
+  const [allBookmarks, setAllBookmarks] = useState<Bookmark[]>([])
   const [folders, setFolders] = useState<Folder[]>([])
   const [batchMode, setBatchMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
@@ -47,6 +48,19 @@ export default function Home() {
   useEffect(() => {
     fetchBookmarks()
   }, [fetchBookmarks])
+
+  const fetchAllBookmarks = useCallback(() => {
+    const params = new URLSearchParams()
+    if (searchQuery)
+      params.set('q', searchQuery)
+    fetch(`/api/bookmarks?${params}`)
+      .then(r => r.json())
+      .then(setAllBookmarks)
+  }, [searchQuery])
+
+  useEffect(() => {
+    fetchAllBookmarks()
+  }, [fetchAllBookmarks])
 
   function handleSetSidebarMode(mode: 'folders' | 'domains') {
     setSidebarMode(mode)
@@ -224,6 +238,7 @@ export default function Home() {
           folders={folders}
           fetchFolders={fetchFolders}
           bookmarks={bookmarks}
+          allBookmarks={allBookmarks}
           selectedDomain={selectedDomain}
           onSelectDomain={setSelectedDomain}
         />
