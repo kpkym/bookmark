@@ -1,5 +1,5 @@
 FROM node:25-slim AS base
-RUN corepack enable pnpm
+RUN npm install -g pnpm
 WORKDIR /app
 
 FROM base AS deps
