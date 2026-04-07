@@ -6,16 +6,16 @@ Self-hosted bookmark manager with screenshot capture via Chrome extension.
 
 - **Framework:** Next.js 16 (App Router, TypeScript, Tailwind CSS 4)
 - **Database:** SQLite via Drizzle ORM + better-sqlite3
-- **Package manager:** pnpm
+- **Package manager:** bun
 - **Deployment:** Docker (standalone output)
 
 ## Commands
 
-- `pnpm dev` — Start dev server (http://localhost:3136)
-- `pnpm build` — Production build
-- `pnpm lint` — ESLint
-- `pnpm dlx drizzle-kit generate` — Generate migration from schema changes
-- `pnpm dlx drizzle-kit migrate` — Apply migrations
+- `bun dev` — Start dev server (http://localhost:3136)
+- `bun run build` — Production build
+- `bun lint` — ESLint
+- `bunx drizzle-kit generate` — Generate migration from schema changes
+- `bunx drizzle-kit migrate` — Apply migrations
 - `docker compose up --build` — Build and run in Docker
 
 ## Project Structure

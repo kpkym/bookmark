@@ -1,16 +1,18 @@
+FROM oven/bun:latest AS bun
+
 FROM node:25-slim AS base
-RUN npm install -g pnpm
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 WORKDIR /app
 
 FROM base AS deps
 RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN pnpm build
+RUN bun run build
 
 FROM base AS runner
 WORKDIR /app
